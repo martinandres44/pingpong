@@ -1,0 +1,911 @@
+import pandas as pd
+import yfinance as yf
+from datetime import datetime, timedelta
+from rich.console import Console
+from rich.table import Table
+import warnings
+import pytz
+from multiprocessing import Pool, cpu_count
+from functools import partial
+from concurrent.futures import ThreadPoolExecutor
+
+# Suprimir advertencias de urllib3
+warnings.filterwarnings("ignore", category=Warning)
+
+console = Console()
+
+def is_market_open():
+    """Verifica si el mercado está abierto (9:30-16:00 ET, lunes a viernes)."""
+    ny_tz = pytz.timezone("America/New_York")
+    now = datetime.now(ny_tz)
+    market_open = now.replace(hour=9, minute=30, second=0, microsecond=0)
+    market_close = now.replace(hour=16, minute=0, second=0, microsecond=0)
+    is_weekday = now.weekday() < 5
+    return is_weekday and market_open <= now <= market_close
+
+def get_last_trading_day(ticker, date=None):
+    """Obtiene el último día hábil hasta la fecha proporcionada (o hoy si no se especifica)."""
+    try:
+        stock = yf.Ticker(ticker)
+        if date is None:
+            today = datetime.now(pytz.timezone("America/New_York"))
+        else:
+            today = datetime.strptime(date, "%Y-%m-%d").replace(tzinfo=pytz.timezone("America/New_York"))
+        start_date = (today - timedelta(days=10)).strftime("%Y-%m-%d")
+        end_date = (today + timedelta(days=1)).strftime("%Y-%m-%d")
+        prices = stock.history(start=start_date, end=end_date, interval="1d")
+        if not prices.empty:
+            return prices.index[-1].strftime("%Y-%m-%d")
+        console.print(f"[yellow]Advertencia: No hay datos recientes para {ticker} cerca de {end_date}[/yellow]")
+        return None
+    except Exception as e:
+        console.print(f"[red]Error al obtener último día hábil para {ticker}: {e}[/red]")
+        return None
+
+def get_previous_close(ticker, reference_date=None):
+    """Obtiene el precio de cierre del día hábil anterior al último día con datos."""
+    try:
+        stock = yf.Ticker(ticker)
+        if reference_date is None:
+            reference_date = get_last_trading_day(ticker)
+        if reference_date is None:
+            return None
+        ref_date = datetime.strptime(reference_date, "%Y-%m-%d")
+        start_date = (ref_date - timedelta(days=10)).strftime("%Y-%m-%d")
+        end_date = ref_date.strftime("%Y-%m-%d")
+        prices = stock.history(start=start_date, end=end_date, interval="1d")
+        if not prices.empty and len(prices) >= 2:
+            return prices["Close"].iloc[-1]
+        console.print(f"[yellow]Advertencia: No se pudo obtener cierre anterior para {ticker}[/yellow]")
+        return None
+    except Exception as e:
+        console.print(f"[red]Error al obtener cierre anterior para {ticker}: {e}[/red]")
+        return None
+
+def get_real_time_price(ticker):
+    """Obtiene el precio en tiempo real durante el horario de mercado."""
+    try:
+        stock = yf.Ticker(ticker)
+        info = stock.info
+        if "regularMarketPrice" in info and info["regularMarketPrice"] is not None:
+            return info["regularMarketPrice"]
+        console.print(f"[yellow]Advertencia: No se pudo obtener precio en tiempo real para {ticker}[/yellow]")
+        return None
+    except Exception as e:
+        console.print(f"[red]Error al obtener precio en tiempo real para {ticker}: {e}[/red]")
+        return None
+
+def get_52_week_high(ticker):
+    """Obtiene el precio máximo de 52 semanas para el ticker."""
+    try:
+        stock = yf.Ticker(ticker)
+        info = stock.info
+        if "fiftyTwoWeekHigh" in info and info["fiftyTwoWeekHigh"] is not None:
+            return info["fiftyTwoWeekHigh"]
+        console.print(f"[yellow]Advertencia: No se pudo obtener máximo de 52 semanas para {ticker}[/yellow]")
+        return None
+    except Exception as e:
+        console.print(f"[red]Error al obtener máximo de 52 semanas para {ticker}: {e}[/red]")
+        return None
+
+def get_annual_return(ticker, start_date, end_date=None, annualize=False):
+    """Calcula el rendimiento porcentual entre dos fechas, opcionalmente anualizado."""
+    try:
+        stock = yf.Ticker(ticker)
+        start_prices = stock.history(start=start_date, end=(datetime.strptime(start_date, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d"), interval="1d")
+        if start_prices.empty or start_prices["Close"].empty:
+            console.print(f"[yellow]Advertencia: No hay datos para {ticker} en {start_date}[/yellow]")
+            return None
+        start_price = start_prices["Close"].iloc[0]
+
+        if end_date is None:
+            if is_market_open():
+                end_price = get_real_time_price(ticker)
+                if end_price is None:
+                    last_day = get_last_trading_day(ticker)
+                    if last_day:
+                        prices = stock.history(start=last_day, end=(datetime.strptime(last_day, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d"), interval="1d")
+                        if not prices.empty:
+                            end_price = prices["Close"].iloc[-1]
+                            end_date = last_day
+                        else:
+                            console.print(f"[yellow]Advertencia: No hay datos para {ticker} en {last_day}[/yellow]")
+                            return None
+                    else:
+                        return None
+                else:
+                    end_date = datetime.now(pytz.timezone("America/New_York")).strftime("%Y-%m-%d")
+            else:
+                last_day = get_last_trading_day(ticker)
+                if last_day:
+                    prices = stock.history(start=last_day, end=(datetime.strptime(last_day, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d"), interval="1d")
+                    if not prices.empty:
+                        end_price = prices["Close"].iloc[-1]
+                        end_date = last_day
+                    else:
+                        console.print(f"[yellow]Advertencia: No hay datos para {ticker} en {last_day}[/yellow]")
+                        return None
+                else:
+                    return None
+        else:
+            prices = stock.history(start=end_date, end=(datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d"), interval="1d")
+            if prices.empty or prices["Close"].empty:
+                console.print(f"[yellow]Advertencia: No hay datos para {ticker} en {end_date}[/yellow]")
+                return None
+            end_price = prices["Close"].iloc[-1]
+
+        if start_price == 0:
+            console.print(f"[yellow]Advertencia: Precio inicial cero para {ticker} en {start_date}[/yellow]")
+            return None
+
+        total_return = ((end_price - start_price) / start_price)
+        if annualize:
+            start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+            end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+            days = (end_dt - start_dt).days
+            years = days / 365.0
+            if years > 0:
+                return ((1 + total_return) ** (1 / years) - 1) * 100
+            console.print(f"[yellow]Advertencia: Período demasiado corto para {ticker} en {start_date} a {end_date}[/yellow]")
+            return None
+        return total_return * 100
+    except Exception as e:
+        console.print(f"[red]Error al obtener datos para {ticker}: {e}[/red]")
+        return None
+
+def get_return_high_vix(ticker, vix_threshold, start_date, end_date=None):
+    """Rendimiento acumulado del ticker solo en ruedas donde el VIX del cierre anterior > vix_threshold."""
+    try:
+        end = end_date or (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
+        start_buf = (datetime.strptime(start_date, "%Y-%m-%d") - timedelta(days=5)).strftime("%Y-%m-%d")
+        data = yf.download([ticker, "^VIX"], start=start_buf, end=end,
+                           interval="1d", auto_adjust=True, progress=False)
+        if data.empty or "Close" not in data.columns:
+            return None
+        closes = data["Close"]
+        if ticker not in closes.columns or "^VIX" not in closes.columns:
+            return None
+        start_dt = pd.Timestamp(start_date)
+        closes = closes[closes.index >= start_dt]
+        if closes.empty:
+            return None
+        ticker_close = closes[ticker].dropna()
+        vix_close    = closes["^VIX"]
+        ticker_close, vix_close = ticker_close.align(vix_close, join="inner")
+        daily_ret = ticker_close.pct_change()
+        vix_prev  = vix_close.shift(1)
+        mask      = vix_prev > vix_threshold
+        filtered  = daily_ret[mask].dropna()
+        if filtered.empty:
+            return 0.0
+        return float(((1 + filtered).prod() - 1) * 100)
+    except Exception:
+        return None
+
+
+def get_vix_stats(year, vix_threshold):
+    """Devuelve (total_ruedas, ruedas_vix_alto) para el año dado hasta hoy."""
+    try:
+        start = f"{year}-01-01"
+        end_dt = min(datetime(year, 12, 31), datetime.now())
+        end = (end_dt + timedelta(days=1)).strftime("%Y-%m-%d")
+        vix = yf.download("^VIX", start=start, end=end, interval="1d",
+                          auto_adjust=False, progress=False)
+        if vix.empty or "Close" not in vix.columns:
+            return None, None
+        close = vix["Close"].dropna()
+        if hasattr(close, "columns"):
+            close = close.iloc[:, 0]
+        return int(len(close)), int((close > vix_threshold).sum())
+    except Exception:
+        return None, None
+
+
+def get_vix_current_info():
+    """Retorna (precio_actual, pct_vs_cierre_anterior) del VIX en tiempo real si el mercado está abierto."""
+    try:
+        price = get_real_time_price("^VIX") if is_market_open() else None
+        last_day = None
+        if price is None:
+            last_day = get_last_trading_day("^VIX")
+            if last_day:
+                prices = yf.Ticker("^VIX").history(
+                    start=last_day,
+                    end=(datetime.strptime(last_day, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d"),
+                    interval="1d"
+                )
+                if not prices.empty:
+                    price = prices["Close"].iloc[-1]
+        prev = get_previous_close("^VIX", reference_date=last_day)
+        pct  = ((price - prev) / prev * 100) if (price and prev and prev != 0) else None
+        return price, pct
+    except Exception:
+        return None, None
+
+
+def _vix_return_from_closes(closes, ticker, vix_threshold, start_date, end_date=None):
+    """Calcula retorno VIX-filtrado desde un DataFrame de closes ya descargado."""
+    try:
+        subset = closes[closes.index >= pd.Timestamp(start_date)]
+        if end_date:
+            subset = subset[subset.index <= pd.Timestamp(end_date)]
+        if subset.empty:
+            return None
+        ticker_c, vix_c = subset[ticker].dropna().align(subset["^VIX"], join="inner")
+        daily_ret = ticker_c.pct_change()
+        filtered  = daily_ret[vix_c.shift(1) > vix_threshold].dropna()
+        if filtered.empty:
+            return 0.0
+        return float(((1 + filtered).prod() - 1) * 100)
+    except Exception:
+        return None
+
+
+def get_hl_avg(ticker, year):
+    """Calcula el promedio diario de (High - Low) / Low para un año dado."""
+    try:
+        stock = yf.Ticker(ticker)
+        current_year = datetime.now().year
+        if year == current_year:
+            start_date = f"{year}-01-01"
+            end_date = None  # hasta hoy
+        else:
+            start_date = f"{year}-01-01"
+            end_date = f"{year}-12-31"
+
+        if end_date:
+            prices = stock.history(start=start_date, end=(datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d"), interval="1d")
+        else:
+            prices = stock.history(start=start_date, interval="1d")
+
+        if prices.empty or "High" not in prices.columns or "Low" not in prices.columns:
+            return None
+
+        prices = prices[prices["Low"] > 0]
+        if prices.empty:
+            return None
+
+        hl_ratio = (prices["High"] - prices["Low"]) / prices["Low"]
+        return hl_ratio.mean() * 100
+    except Exception as e:
+        console.print(f"[red]Error al obtener HL para {ticker} en {year}: {e}[/red]")
+        return None
+
+def get_avg30r(ticker):
+    """Calcula el promedio de abs((Close - Close anterior) / Close anterior) para las últimas 30 ruedas."""
+    try:
+        stock = yf.Ticker(ticker)
+        # Traemos ~45 días calendario para asegurar 31 ruedas de mercado
+        end_date = datetime.now(pytz.timezone("America/New_York"))
+        start_date = (end_date - timedelta(days=65)).strftime("%Y-%m-%d")
+        prices = stock.history(start=start_date, interval="1d")
+        if prices.empty or len(prices) < 2:
+            return None
+        closes = prices["Close"].iloc[-31:]  # últimas 31 velas -> 30 cambios
+        if len(closes) < 2:
+            return None
+        daily_changes = closes.pct_change().dropna().abs()
+        daily_changes = daily_changes.iloc[-30:]  # asegurar máximo 30
+        if daily_changes.empty:
+            return None
+        return daily_changes.mean() * 100
+    except Exception as e:
+        console.print(f"[red]Error al obtener AVG30R para {ticker}: {e}[/red]")
+        return None
+
+def process_ticker_vix(ticker, date_ranges, vix_threshold=20):
+    """Descarga datos una sola vez y calcula todos los retornos VIX-filtrados."""
+    ticker = ticker.strip().upper()
+    starts = [dr[1] for dr in date_ranges if dr[1]]
+    if not starts:
+        return None
+    earliest  = min(starts)
+    start_buf = (datetime.strptime(earliest, "%Y-%m-%d") - timedelta(days=5)).strftime("%Y-%m-%d")
+    end_buf   = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
+    try:
+        data = yf.download([ticker, "^VIX"], start=start_buf, end=end_buf,
+                           interval="1d", auto_adjust=True, progress=False)
+        if data.empty or "Close" not in data.columns:
+            return None
+        closes = data["Close"]
+        if ticker not in closes.columns or "^VIX" not in closes.columns:
+            return None
+    except Exception:
+        return None
+    # Precio actual y % Prior
+    current_price = get_real_time_price(ticker) if is_market_open() else None
+    last_day = None
+    if current_price is None:
+        last_day = get_last_trading_day(ticker)
+        if last_day:
+            prices = yf.Ticker(ticker).history(
+                start=last_day,
+                end=(datetime.strptime(last_day, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d"),
+                interval="1d"
+            )
+            if not prices.empty:
+                current_price = prices["Close"].iloc[-1]
+    prev_close = get_previous_close(ticker, reference_date=last_day)
+
+    row    = {"Símbolo": ticker}
+    row["Ahora"]   = current_price
+    row["% Prior"] = ((current_price - prev_close) / prev_close * 100) \
+                     if (current_price and prev_close and prev_close != 0) else None
+
+    all_na = True
+    for period, start, end_date, _annualize in date_ranges:
+        ret = _vix_return_from_closes(closes, ticker, vix_threshold, start, end_date)
+        row[period] = ret
+        if pd.notnull(ret):
+            all_na = False
+    return row if not all_na else None
+
+
+def process_ticker(ticker, date_ranges, hl_years):
+    """Procesa un ticker en paralelo, calculando precios, rendimientos, máximo de 52 semanas, diferencia y HL."""
+    ticker = ticker.strip().upper()
+    row = {"Símbolo": ticker}
+
+    # Obtener precio actual
+    current_price = get_real_time_price(ticker) if is_market_open() else None
+    last_day = None
+    if current_price is None:
+        last_day = get_last_trading_day(ticker)
+        if last_day:
+            prices = yf.Ticker(ticker).history(start=last_day, end=(datetime.strptime(last_day, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d"), interval="1d")
+            if not prices.empty:
+                current_price = prices["Close"].iloc[-1]
+    row["Ahora"] = current_price
+
+    # Obtener cierre anterior
+    previous_close = get_previous_close(ticker, reference_date=last_day if last_day else None)
+    if current_price is not None and previous_close is not None and previous_close != 0:
+        row["% Prior"] = ((current_price - previous_close) / previous_close) * 100
+    else:
+        row["% Prior"] = None
+
+    # Obtener máximo de 52 semanas
+    high_52wk = get_52_week_high(ticker)
+    row["High52Wk"] = high_52wk
+
+    # Calcular diferencia (Ahora - High52Wk) / High52Wk
+    if current_price is not None and high_52wk is not None and high_52wk != 0:
+        row["#Dif"] = ((current_price - high_52wk) / high_52wk) * 100
+    else:
+        row["#Dif"] = None
+
+    # Calcular rendimientos para cada período
+    all_na = True
+    for period, start, end, annualize in date_ranges:
+        return_value = get_annual_return(ticker, start, end, annualize=annualize)
+        row[period] = return_value
+        if pd.notnull(return_value):
+            all_na = False
+
+    # Calcular HL para cada año
+    for year in hl_years:
+        col_name = f"HL {year}"
+        row[col_name] = get_hl_avg(ticker, year)
+
+    # Calcular AVG30R
+    row["AVG30R"] = get_avg30r(ticker)
+
+    return row if not all_na else None
+
+def format_percentage(value):
+    """Formatea el porcentaje con '+' para positivos y 'N/A' para None."""
+    if pd.notnull(value):
+        return f"+{value:.2f}%" if value >= 0 else f"{value:.2f}%"
+    return "N/A"
+
+def format_price(value):
+    """Formatea el precio con 2 decimales, sin signo $."""
+    if pd.notnull(value):
+        return f"{value:.2f}"
+    return "N/A"
+
+def get_percentage_style(value, max_values, column):
+    """Devuelve el estilo: blanco para el máximo, verde para positivos, rosa claro para negativos."""
+    try:
+        num_value = float(str(value).replace('%', '').replace('+', ''))
+        if column in max_values and pd.notnull(max_values[column]) and abs(num_value - max_values[column]) < 0.01:
+            return "white"
+        return "green1" if num_value >= 0 else "#FFB6C1"
+    except (ValueError, TypeError):
+        return "white"
+
+def create_returns_table(tickers):
+    """Crea la tabla de rendimientos para los tickers proporcionados usando multiprocesamiento."""
+    current_year = datetime.now().year
+    years = [str(current_year - i) for i in range(1, 6)]  # ej: 2025,2024,2023,2022,2021
+
+    # Años para columnas HL: año en curso, año anterior, anterior al anterior
+    hl_years = [current_year, current_year - 1, current_year - 2]
+
+    # Obtener últimos días hábiles para cada año relevante
+    reference_ticker = "^GSPC"
+    last_trading_days = {}
+
+    def get_last_trading_day_of_year(year):
+        if year in last_trading_days:
+            return last_trading_days[year]
+        date_to_check = f"{year}-12-31"
+        last_day = get_last_trading_day(reference_ticker, date=date_to_check)
+        if last_day:
+            last_trading_days[year] = last_day
+            return last_day
+        console.print(f"[yellow]No se pudo determinar el último día hábil de {year}, usando {year}-12-30[/yellow]")
+        last_trading_days[year] = f"{year}-12-30"
+        return last_trading_days[year]
+
+    date_ranges = [
+        (f"YTD {current_year}", get_last_trading_day_of_year(current_year-1), None, False),
+        (f">= {current_year-1}", get_last_trading_day_of_year(current_year-2), None, True),
+        (f">= {current_year-2}", get_last_trading_day_of_year(current_year-3), None, True),
+        (f">= {current_year-3}", get_last_trading_day_of_year(current_year-4), None, True),
+        (f">= {current_year-4}", get_last_trading_day_of_year(current_year-5), None, True),
+    ]
+    for year in years:
+        year_int = int(year)
+        start_date = get_last_trading_day_of_year(year_int-1)
+        end_date = get_last_trading_day_of_year(year_int)
+        date_ranges.append((year, start_date, end_date, False))
+
+    unique_tickers = list(dict.fromkeys(tickers)) + ["^GSPC"]
+    results = []
+
+    with Pool(processes=min(len(unique_tickers), cpu_count())) as pool:
+        process_partial = partial(process_ticker, date_ranges=date_ranges, hl_years=hl_years)
+        for result in pool.map(process_partial, unique_tickers):
+            if result is not None:
+                results.append(result)
+
+    if not results:
+        return None, None, None
+
+    df = pd.DataFrame(results)
+
+    hl_col_names = [f"HL {y}" for y in hl_years]
+
+    # Extraer AVG30R antes de filtrar columnas
+    avg30r_map = {r["Símbolo"]: r["AVG30R"] for _, r in df.iterrows() if pd.notnull(r.get("AVG30R"))}
+
+    columns = ["Símbolo", "Ahora", "% Prior", f"YTD {current_year}"] + years + [f">= {current_year-1}", f">= {current_year-2}", f">= {current_year-3}", f">= {current_year-4}", "High52Wk", "#Dif"] + hl_col_names
+    df = df[columns]
+
+    # ── Ranking vs ^GSPC ─────────────────────────────────────────────
+    # Columnas de comparación: YTD + años individuales
+    rank_cols = [f"YTD {current_year}"] + years
+    gspc_row  = df[df["Símbolo"] == "^GSPC"]
+    ticker_ranks = {}
+    if not gspc_row.empty:
+        for tk in df[df["Símbolo"] != "^GSPC"]["Símbolo"]:
+            tk_row = df[df["Símbolo"] == tk]
+            wins = 0
+            total_alpha = 0.0
+            for col in rank_cols:
+                tk_val   = tk_row[col].values[0]
+                sp_val   = gspc_row[col].values[0]
+                if pd.notnull(tk_val) and pd.notnull(sp_val):
+                    if tk_val > sp_val:
+                        wins += 1
+                        total_alpha += tk_val - sp_val
+            ticker_ranks[tk] = (wins, total_alpha)
+        # Ordenar: más victorias primero, desempate por alpha acumulado
+        ranked = sorted(ticker_ranks.items(), key=lambda x: (-x[1][0], -x[1][1]))
+        rank_map = {tk: (i + 1, wins, alpha) for i, (tk, (wins, alpha)) in enumerate(ranked)}
+    else:
+        rank_map = {}
+
+    # Promedios y máximos
+    percentage_columns = ["% Prior", f"YTD {current_year}"] + years + [f">= {current_year-1}", f">= {current_year-2}", f">= {current_year-3}", f">= {current_year-4}", "#Dif"] + hl_col_names
+    avg_row = {"Símbolo": "AVG"}
+    for col in percentage_columns:
+        avg_row[col] = df[col].mean() if not df[col].isna().all() else None
+    avg_row["Ahora"] = None
+    avg_row["High52Wk"] = None
+
+    max_values = {}
+    for col in percentage_columns:
+        max_values[col] = df[col].max() if not df[col].isna().all() else None
+
+    df_display = df.copy()
+    for col in percentage_columns[:-len(hl_col_names)-1]:
+        df_display[col] = df_display[col].apply(format_percentage)
+    df_display["Ahora"] = df_display["Ahora"].apply(format_price)
+    df_display["High52Wk"] = df_display["High52Wk"].apply(format_price)
+    df_display["#Dif"] = df_display["#Dif"].apply(format_percentage)
+    for col in hl_col_names:
+        df_display[col] = df_display[col].apply(format_percentage)
+
+    for col in percentage_columns:
+        df_display[col] = df_display.apply(
+            lambda row: f"[{get_percentage_style(row[col], max_values, col)}]{row[col]}[/]", axis=1
+        )
+
+    return df_display, avg_row, max_values, years, current_year, hl_years, rank_map, avg30r_map
+
+def create_returns_table_vix(tickers, vix_threshold=20):
+    """Crea tabla de rendimientos filtrados por VIX > vix_threshold."""
+    current_year = datetime.now().year
+    years = [str(current_year - i) for i in range(1, 6)]
+    reference_ticker = "^GSPC"
+    last_trading_days = {}
+
+    def get_last_trading_day_of_year(year):
+        if year in last_trading_days:
+            return last_trading_days[year]
+        last_day = get_last_trading_day(reference_ticker, date=f"{year}-12-31")
+        last_trading_days[year] = last_day or f"{year}-12-30"
+        return last_trading_days[year]
+
+    date_ranges = [
+        (f"YTD {current_year}", get_last_trading_day_of_year(current_year - 1), None, False),
+        (f">= {current_year-1}", get_last_trading_day_of_year(current_year - 2), None, False),
+        (f">= {current_year-2}", get_last_trading_day_of_year(current_year - 3), None, False),
+        (f">= {current_year-3}", get_last_trading_day_of_year(current_year - 4), None, False),
+        (f">= {current_year-4}", get_last_trading_day_of_year(current_year - 5), None, False),
+    ]
+    for year in years:
+        year_int = int(year)
+        date_ranges.append((year, get_last_trading_day_of_year(year_int - 1),
+                             get_last_trading_day_of_year(year_int), False))
+
+    unique_tickers = list(dict.fromkeys(tickers)) + ["^GSPC"]
+
+    # Lanzar estadísticas VIX, info actual del VIX y pool de tickers en paralelo
+    with ThreadPoolExecutor(max_workers=3) as tex:
+        future_stats_cur  = tex.submit(get_vix_stats, current_year,     vix_threshold)
+        future_stats_prev = tex.submit(get_vix_stats, current_year - 1, vix_threshold)
+        future_vix_info   = tex.submit(get_vix_current_info)
+
+    stats_cur  = future_stats_cur.result()
+    stats_prev = future_stats_prev.result()
+    vix_info   = future_vix_info.result()
+
+    results = []
+    with Pool(processes=min(len(unique_tickers), cpu_count())) as pool:
+        process_partial = partial(process_ticker_vix, date_ranges=date_ranges, vix_threshold=vix_threshold)
+        for result in pool.map(process_partial, unique_tickers):
+            if result is not None:
+                results.append(result)
+
+    if not results:
+        return None, None, None, None, None, None
+
+    df = pd.DataFrame(results)
+    period_cols = [f"YTD {current_year}"] + years + \
+                  [f">= {current_year-1}", f">= {current_year-2}", f">= {current_year-3}", f">= {current_year-4}"]
+    price_cols  = ["Ahora", "% Prior"]
+    columns     = ["Símbolo"] + [c for c in price_cols + period_cols if c in df.columns]
+    df = df[columns]
+
+    avg_row = {"Símbolo": "AVG", "Ahora": None, "% Prior": None}
+    for col in period_cols:
+        if col in df.columns:
+            avg_row[col] = df[col].mean() if not df[col].isna().all() else None
+
+    max_values = {}
+    for col in period_cols + ["% Prior"]:
+        if col in df.columns:
+            max_values[col] = df[col].max() if not df[col].isna().all() else None
+
+    df_display = df.copy()
+    if "Ahora" in df_display.columns:
+        df_display["Ahora"] = df_display["Ahora"].apply(format_price)
+    if "% Prior" in df_display.columns:
+        df_display["% Prior"] = df_display["% Prior"].apply(format_percentage)
+        df_display["% Prior"] = df_display.apply(
+            lambda row: f"[{get_percentage_style(row['% Prior'], max_values, '% Prior')}]{row['% Prior']}[/]", axis=1
+        )
+    for col in period_cols:
+        if col in df_display.columns:
+            df_display[col] = df_display[col].apply(format_percentage)
+    for col in period_cols:
+        if col in df_display.columns:
+            df_display[col] = df_display.apply(
+                lambda row, c=col: f"[{get_percentage_style(row[c], max_values, c)}]{row[c]}[/]", axis=1
+            )
+
+    return df_display, avg_row, max_values, years, current_year, (stats_cur, stats_prev, vix_info)
+
+
+def print_rich_table_vix(df, avg_row, max_values, years, current_year, vix_threshold=20, vix_stats=None):
+    """Imprime la tabla de rendimientos filtrados por VIX con estadísticas en el encabezado."""
+    console = Console()
+    horizontal_line_length = 216
+    console.print("[white]─" * horizontal_line_length + "[/white]")
+    meses_es = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+    hoy = datetime.now()
+    fecha_str = f"{hoy.day:02d}-{meses_es[hoy.month - 1]}-{str(hoy.year)[2:]}"
+
+    # Construir línea de estadísticas para el encabezado
+    stats_str = ""
+    if vix_stats:
+        (total_cur, high_cur), (total_prev, high_prev), (vix_price, vix_pct) = vix_stats
+        # VIX actual en rojo
+        vix_str = ""
+        if vix_price is not None:
+            vix_pct_str = f" ([red]{vix_pct:+.2f}%[/red])" if vix_pct is not None else ""
+            vix_str = f"  [bold red]VIX {vix_price:.2f}[/bold red]{vix_pct_str}"
+        parts = []
+        if total_prev is not None:
+            parts.append(f"Ruedas {current_year-1}: [dim white]{total_prev}[/dim white]  VIX>{vix_threshold}: [dim white]{high_prev if high_prev is not None else 'N/A'}[/dim white]")
+        if total_cur is not None:
+            parts.append(f"Ruedas {current_year}: [cyan1]{total_cur}[/cyan1]  VIX>{vix_threshold}: [cyan1]{high_cur if high_cur is not None else 'N/A'}[/cyan1]")
+        ruedas_str = ("    " + "    |    ".join(parts)) if parts else ""
+        stats_str = vix_str + ruedas_str
+
+    console.print(f"[bold white]RENDIMIENTOS CON VIX > {vix_threshold} (AL DIA {fecha_str})[/bold white]{stats_str}\n")
+
+    table = Table(show_header=True, header_style="bold white", border_style="white",
+                  style="white on black", show_lines=False, box=None, pad_edge=False)
+
+    columns = list(df.columns)
+
+    # Separador entre años individuales y columnas >=
+    last_annual_year = None
+    for y in reversed(years):
+        if y in columns:
+            last_annual_year = y
+            break
+    sep1 = (columns.index(last_annual_year) + 1) if last_annual_year else (columns.index(f"YTD {current_year}") + 1)
+    columns.insert(sep1, "│")
+
+    for col in columns:
+        if col == "│":
+            table.add_column("", justify="center", style="white on black", width=1, no_wrap=True)
+        elif col == "Símbolo":
+            table.add_column("  Símbolo", justify="left", style="white on black")
+        elif col == "Ahora":
+            table.add_column("Ahora", justify="right", style="white on black")
+        elif col == "% Prior":
+            table.add_column(" % Prior ", justify="right", style="white on black")
+        elif col in years:
+            table.add_column(f"{col}", justify="right", style="white on black")
+        else:
+            table.add_column(f" {col} ", justify="right", style="white on black")
+
+    table.add_row(*["" if c != "│" else "│" for c in columns], style="on black")
+
+    for idx, row in df.iterrows():
+        row_style = "on #3A444A" if idx % 2 == 0 else "on black"
+        row_values = []
+        for col in df.columns:
+            row_values.append(f"  {row[col]}" if col in ["Símbolo"] + years else row[col])
+        row_values.insert(sep1, "│")
+        table.add_row(*row_values, style=row_style)
+
+    table.add_row(*["" if c != "│" else "│" for c in columns], style="on black")
+    table.add_row(*["" for _ in columns], style="on black")
+
+    avg_values = ["  AVG"]
+    for col in df.columns:
+        if col == "Símbolo":
+            continue
+        value = avg_row.get(col, None)
+        formatted = format_percentage(value)
+        style = get_percentage_style(formatted, max_values, col)
+        avg_values.append(f"[{style}]{formatted}[/]")
+    avg_values.insert(sep1, "│")
+    table.add_row(*avg_values, style="on black")
+
+    table.add_row(*["" if c != "│" else "│" for c in columns], style="on black")
+    console.print(table)
+    console.print("[white]─" * horizontal_line_length + "[/white]")
+
+
+def print_rich_table(df, avg_row, max_values, years, current_year, hl_years):
+    """Imprime la tabla usando rich con líneas verticales dinámicas."""
+    console = Console()
+    horizontal_line_length = 216
+    console.print("[white]─" * horizontal_line_length + "[/white]")
+    meses_es = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+    hoy = datetime.now()
+    fecha_str = f"{hoy.day:02d}-{meses_es[hoy.month - 1]}-{str(hoy.year)[2:]}"
+    console.print(f"[bold white]RENDIMIENTOS HISTÓRICOS DE ACCIONES (AL DIA {fecha_str})[/bold white]\n")
+
+    table = Table(show_header=True, header_style="bold white", border_style="white", style="white on black", show_lines=False, box=None, pad_edge=False)
+
+    columns = list(df.columns)
+
+    hl_col_names = [f"HL {y}" for y in hl_years]
+
+    # Encontrar dinámicamente la última columna de año individual (ej. "2021" en 2026)
+    last_annual_year = None
+    for y in reversed(years):  # desde el más reciente al más antiguo
+        if y in columns:
+            last_annual_year = y
+            break
+
+    # Posiciones de las líneas verticales
+    if last_annual_year:
+        separator_index_1 = columns.index(last_annual_year) + 1
+    else:
+        separator_index_1 = columns.index(f"YTD {current_year}") + 1
+
+    separator_index_2 = columns.index("High52Wk") + 1  # después de High52Wk
+
+    # Separador antes de las columnas HL
+    separator_index_3 = columns.index(hl_col_names[0]) + 1  # después de #Dif (antes de HL)
+    # Ajustamos: queremos el separador ANTES de HL 1, es decir en la posición de HL 1
+    separator_index_3 = columns.index(hl_col_names[0])
+
+    # Insertar las columnas separadoras
+    columns.insert(separator_index_1, "│")
+    # La segunda inserción debe ajustarse porque ya insertamos una
+    columns.insert(separator_index_2 + 1, "│")
+    # La tercera inserción ajustada por las dos anteriores
+    columns.insert(separator_index_3 + 2, "│")
+
+    # Añadir columnas al table
+    for col in columns:
+        if col == "│":
+            table.add_column("", justify="center", style="white on black", width=1, no_wrap=True)
+        elif col == "Símbolo":
+            table.add_column("  Símbolo", justify="left", style="white on black")
+        elif col == "% Prior":
+            table.add_column(" % Prior ", justify="right", style="white on black")
+        elif col == "Ahora":
+            table.add_column("Ahora", justify="right", style="white on black")
+        elif col == "High52Wk":
+            table.add_column("  High52Wk  ", justify="right", style="white on black")
+        elif col == "#Dif":
+            table.add_column("  #Dif  ", justify="right", style="white on black")
+        elif col in hl_col_names:
+            table.add_column(f" {col} ", justify="right", style="white on black")
+        elif col == "AVG30R":
+            pass  # eliminado de tabla inferior
+        elif col in years:
+            table.add_column(f"{col}", justify="right", style="white on black")
+        else:
+            table.add_column(f" {col} ", justify="right", style="white on black")
+
+    # Fila de separación superior
+    table.add_row(*["" if c != "│" else "│" for c in columns], style="on black")
+
+    # Filas de datos
+    for idx, row in df.iterrows():
+        row_style = "on #3A444A" if idx % 2 == 0 else "on black"
+        row_values = []
+        for col in df.columns:
+            if col == "Símbolo":
+                row_values.append(f"  {row[col]}")
+            elif col in years:
+                row_values.append(f"  {row[col]}")
+            else:
+                row_values.append(row[col])
+        # Insertar separadores en la misma posición
+        row_values.insert(separator_index_1, "│")
+        row_values.insert(separator_index_2 + 1, "│")
+        row_values.insert(separator_index_3 + 2, "│")
+        table.add_row(*row_values, style=row_style)
+
+    # Fila vacía
+    table.add_row(*["" if c != "│" else "│" for c in columns], style="on black")
+    table.add_row(*["" for _ in columns], style="on black")
+
+    # Fila de promedios
+    percentage_columns = ["% Prior", f"YTD {current_year}"] + years + [f">= {current_year-1}", f">= {current_year-2}", f">= {current_year-3}", f">= {current_year-4}", "#Dif"] + hl_col_names
+    avg_values = ["  AVG"]
+    for col in df.columns:
+        if col == "Símbolo":
+            continue
+        elif col in percentage_columns:
+            value = avg_row.get(col, None)
+            formatted = format_percentage(value)
+            style = get_percentage_style(formatted, max_values, col)
+            avg_values.append(f"[{style}]{formatted}[/]")
+        else:
+            avg_values.append("")
+    avg_values.insert(separator_index_1, "│")
+    avg_values.insert(separator_index_2 + 1, "│")
+    avg_values.insert(separator_index_3 + 2, "│")
+    table.add_row(*avg_values, style="on black")
+
+    # Línea final
+    table.add_row(*["" if c != "│" else "│" for c in columns], style="on black")
+
+    console.print(table)
+    console.print("[white]─" * horizontal_line_length + "[/white]")
+
+def get_ticker_info(ticker):
+    """Devuelve (ticker, name, sector, industry) desde yfinance."""
+    try:
+        info = yf.Ticker(ticker).info
+        return (
+            ticker,
+            info.get("longName") or info.get("shortName") or "—",
+            info.get("sector")   or "—",
+            info.get("industry") or "—",
+        )
+    except Exception:
+        return (ticker, "—", "—", "—")
+
+
+def print_info_table(tickers, rank_map=None, avg30r_map=None):
+    """Imprime tabla con nombre, rank vs ^GSPC, sector e industria de cada símbolo."""
+    console.print("  [dim]Obteniendo información de empresas...[/dim]")
+    with ThreadPoolExecutor(max_workers=min(len(tickers), 8)) as ex:
+        rows = list(ex.map(get_ticker_info, tickers))
+
+    horizontal_line_length = 216
+    console.print("[white]─" * horizontal_line_length + "[/white]")
+
+    rank_map   = rank_map   or {}
+    avg30r_map = avg30r_map or {}
+    n_cols     = len([r for r in rows if r[0] != "^GSPC"])
+
+    t = Table(show_header=True, header_style="bold white", border_style="white",
+              style="white on black", show_lines=False, box=None, pad_edge=False)
+    t.add_column("  Símbolo", justify="left",  width=10)
+    t.add_column("Nombre",    justify="left",  width=50)
+    t.add_column("#",         justify="right", width=5)
+    t.add_column("Rank",      justify="left",  width=14)
+    t.add_column("AVG30R",    justify="right", width=9)
+    t.add_column("Sector",    justify="left",  width=28)
+    t.add_column("Industria", justify="left",  width=40)
+
+    for i, (tk, name, sector, industry) in enumerate(rows):
+        row_style = "on #3A444A" if i % 2 == 0 else "on black"
+        if tk in rank_map:
+            pos, wins, alpha = rank_map[tk]
+            if wins >= 4:
+                rc = "bold white"
+            elif pos <= max(1, n_cols // 3):
+                rc = "green1"
+            elif pos <= max(1, n_cols * 2 // 3):
+                rc = "yellow"
+            else:
+                rc = "#FFB6C1"
+            pos_str  = f"[{rc}]{pos}[/{rc}]"
+            rank_str = (f"[bold white]{wins}v  α{alpha:+.0f}%[/bold white]"
+                        if wins >= 4 else f"[dim]{wins}v  α{alpha:+.0f}%[/dim]")
+        else:
+            pos_str  = "[dim]—[/dim]"
+            rank_str = ""
+        avg30r_val = avg30r_map.get(tk)
+        if avg30r_val is not None:
+            ac = "green1" if avg30r_val >= 0 else "#FFB6C1"
+            avg30r_cell = f"[{ac}]{format_percentage(avg30r_val)}[/{ac}]"
+        else:
+            avg30r_cell = "[dim]—[/dim]"
+        t.add_row(f"  [bold white]{tk}[/bold white]", name, pos_str, rank_str, avg30r_cell, sector, industry, style=row_style)
+
+    console.print(t)
+    console.print("[white]─" * horizontal_line_length + "[/white]")
+    console.print()
+    console.print()
+
+
+def main():
+    console.print("[bold yellow]Ingrese hasta 15 símbolos de acciones (presione Enter para terminar):[/bold yellow]")
+    tickers = []
+    for i in range(15):
+        ticker = console.input(f"Símbolo {i+1}: ").strip().upper()
+        if not ticker:
+            break
+        tickers.append(ticker)
+
+    if not tickers:
+        console.print("[red]No se ingresaron símbolos válidos.[/red]")
+        return
+
+    console.print("\n[bold blue]Calculando rendimientos...[/bold blue]")
+
+    result_normal = create_returns_table(tickers)
+
+    rank_map   = {}
+    avg30r_map = {}
+    if result_normal[0] is not None:
+        df, avg_row, max_values, years, current_year, hl_years, rank_map, avg30r_map = result_normal
+
+    print_info_table(tickers, rank_map=rank_map, avg30r_map=avg30r_map)
+
+    if result_normal[0] is not None:
+        print_rich_table(df, avg_row, max_values, years, current_year, hl_years)
+    else:
+        console.print("[red]No se pudieron calcular los rendimientos para los símbolos proporcionados.[/red]")
+
+if __name__ == "__main__":
+    main()
