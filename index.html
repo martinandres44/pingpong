@@ -445,12 +445,12 @@ function renderH2H() {
   const area = document.getElementById('h2h-area');
   if (matches.length === 0) { area.innerHTML = '<p class="empty">Todavía no hay partidos cargados</p>'; return; }
 
-  const h2h = teams.map(function() { return teams.map(function() { return { w: 0, l: 0, pf: 0, pc: 0 }; }); });
+  const h2h = teams.map(function() { return teams.map(function() { return { w: 0, l: 0 }; }); });
   matches.forEach(function(m) {
     const a = m.a, b = m.b, sa = m.sa, sb = m.sb;
     if (a >= teams.length || b >= teams.length) return;
-    h2h[a][b].pf += sa; h2h[a][b].pc += sb;
-    h2h[b][a].pf += sb; h2h[b][a].pc += sa;
+    
+    
     if (sa > sb) { h2h[a][b].w++; h2h[b][a].l++; }
     else         { h2h[b][a].w++; h2h[a][b].l++; }
   });
@@ -469,9 +469,9 @@ function renderH2H() {
       const pj = teamPalette(j);
       const d = h2h[i][j];
       const total = d.w + d.l;
-      const dp = d.pf - d.pc;
-      const dpStr = dp === 0 ? '0' : (dp > 0 ? '+' + dp : String(dp));
-      const dpColor = dp > 0 ? 'var(--green)' : dp < 0 ? 'var(--red)' : 'var(--text-tertiary)';
+      
+      
+      
 
       let barsHtml = '';
       if (total === 0) {
@@ -486,7 +486,7 @@ function renderH2H() {
       html += '<div class="h2h-row">' +
         '<div class="h2h-label">' + teams[j].short + '</div>' +
         '<div class="h2h-bars">' + barsHtml + '</div>' +
-        '<div class="h2h-stat">' + (total > 0 ? d.w + 'G – ' + d.l + 'P<br><span style="color:' + dpColor + '">' + dpStr + ' pts</span>' : '–') + '</div>' +
+        '<div class="h2h-stat">' + (total > 0 ? d.w + 'G / ' + d.l + 'P' : '–') + '</div>' +
       '</div>';
     });
 
