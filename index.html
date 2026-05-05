@@ -15,7 +15,6 @@
   }
   body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 15px; line-height: 1.5; min-height: 100vh; }
 
-  /* HEADER */
   .header { background: var(--surface); border-bottom: 0.5px solid var(--border); padding: 1rem 1.5rem; display: flex; align-items: center; gap: 12px; }
   .header-icon { width: 36px; height: 36px; border-radius: 50%; background: #E6F1FB; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
   .header h1 { font-size: 17px; font-weight: 600; }
@@ -27,10 +26,17 @@
   .sync-dot.loading { background: #EF9F27; animation: pulse 1s infinite; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-  /* LAYOUT */
   .container { max-width: 680px; margin: 0 auto; padding: 1.5rem 1rem; }
   .card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem; }
   .card-title { font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 1rem; }
+
+  /* TABS */
+  .tabs-bar { display: flex; gap: 4px; background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 5px; margin-bottom: 1rem; }
+  .tab-btn { flex: 1; padding: 9px 4px; border-radius: var(--radius-sm); border: none; background: transparent; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text-secondary); transition: all 0.15s; }
+  .tab-btn:hover { background: var(--bg); color: var(--text); }
+  .tab-btn.active { background: var(--bg); color: var(--text); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.07); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
 
   /* TEAMS */
   .teams-grid { display: grid; gap: 8px; margin-bottom: 1rem; }
@@ -38,13 +44,10 @@
   .team-btn:hover { background: var(--bg); }
   .team-btn.active { border-width: 2px; }
   .team-dot-btn { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .team-btn.del-team-btn { background: none; border: none; color: var(--text-tertiary); font-size: 14px; padding: 0 4px; cursor: pointer; margin-left: auto; }
-
-  /* NUEVA PAREJA */
   .add-team-row { display: flex; gap: 8px; margin-top: 8px; }
   .add-team-input { flex: 1; padding: 8px 12px; border-radius: var(--radius-sm); border: 0.5px solid var(--border-strong); background: var(--bg); color: var(--text); font-size: 13px; }
   .add-team-input::placeholder { color: var(--text-tertiary); }
-  .btn-sm { padding: 8px 14px; border-radius: var(--radius-sm); border: 0.5px solid var(--border-strong); background: var(--text); color: var(--surface); font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+  .btn-sm { padding: 8px 14px; border-radius: var(--radius-sm); border: none; background: var(--text); color: var(--surface); font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; }
   .btn-sm:hover { opacity: 0.85; }
   .section-sub { font-size: 11px; color: var(--text-tertiary); margin-bottom: 6px; margin-top: 12px; }
 
@@ -86,16 +89,15 @@
   .h2h-section { margin-bottom: 1.2rem; }
   .h2h-section:last-child { margin-bottom: 0; }
   .h2h-title { font-size: 13px; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 7px; }
-  .h2h-row { display: flex; align-items: center; margin-bottom: 6px; gap: 0; border-radius: var(--radius-sm); overflow: hidden; background: var(--bg); }
+  .h2h-row { display: flex; align-items: center; margin-bottom: 6px; border-radius: var(--radius-sm); overflow: hidden; background: var(--bg); }
   .h2h-label { font-size: 12px; font-weight: 500; color: var(--text-secondary); width: 90px; flex-shrink: 0; padding: 9px 10px; line-height: 1.3; }
   .h2h-bars { flex: 1; height: 34px; display: flex; overflow: hidden; }
-  .h2h-bar-w { display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; font-size: 12px; font-weight: 700; color: #fff; transition: flex 0.3s; min-width: 0; }
-  .h2h-bar-l { display: flex; align-items: center; justify-content: flex-start; padding-left: 8px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.9); transition: flex 0.3s; min-width: 0; }
+  .h2h-bar-w { display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; font-size: 12px; font-weight: 700; color: #fff; min-width: 0; }
+  .h2h-bar-l { display: flex; align-items: center; justify-content: flex-start; padding-left: 8px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.9); min-width: 0; }
   .h2h-bar-none { flex: 1; background: var(--border); display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--text-tertiary); }
   .h2h-stat { width: 68px; flex-shrink: 0; text-align: right; padding: 9px 10px; font-size: 11px; color: var(--text-tertiary); line-height: 1.5; }
   .h2h-divider { height: 0.5px; background: var(--border); margin: 14px 0; }
 
-  /* MISC */
   .empty { font-size: 13px; color: var(--text-tertiary); padding: 4px 0; }
   .loading-state { text-align: center; padding: 1.5rem 0; color: var(--text-tertiary); font-size: 13px; }
   .error-banner { background: #FCEBEB; color: #791F1F; border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; margin-bottom: 1rem; border: 0.5px solid #F09595; line-height: 1.5; }
@@ -105,6 +107,7 @@
     .header { padding: 0.9rem 1rem; }
     .h2h-label { width: 74px; font-size: 11px; padding: 8px 8px; }
     .h2h-stat { width: 58px; font-size: 10px; }
+    .tab-btn { font-size: 12px; }
   }
 </style>
 </head>
@@ -114,7 +117,7 @@
   <div class="header-icon">🏓</div>
   <div>
     <h1>Campeonato Ping Pong</h1>
-    <p id="header-subtitle">Cargando parejas...</p>
+    <p id="header-subtitle">Cargando...</p>
   </div>
   <div class="sync-indicator">
     <div class="sync-dot loading" id="sync-dot"></div>
@@ -126,7 +129,7 @@
 
   <div id="error-banner" style="display:none" class="error-banner"></div>
 
-  <!-- NUEVO PARTIDO -->
+  <!-- CARD NUEVO PARTIDO -->
   <div class="card">
     <div class="card-title">Parejas</div>
     <div class="teams-grid" id="teams-grid"></div>
@@ -143,22 +146,29 @@
     </div>
   </div>
 
-  <!-- TABLA DE POSICIONES -->
-  <div class="card">
-    <div class="card-title">Tabla de posiciones</div>
-    <div id="standings-area"><div class="loading-state">Cargando...</div></div>
+  <!-- TABS -->
+  <div class="tabs-bar">
+    <button class="tab-btn active" id="tab-standings" onclick="switchTab('standings')">Posiciones</button>
+    <button class="tab-btn" id="tab-history" onclick="switchTab('history')">Historial</button>
+    <button class="tab-btn" id="tab-h2h" onclick="switchTab('h2h')">Head to Head</button>
   </div>
 
-  <!-- HISTORIAL -->
-  <div class="card">
-    <div class="card-title">Historial de partidos</div>
-    <div id="history-area"><div class="loading-state">Cargando...</div></div>
+  <div class="tab-panel active" id="panel-standings">
+    <div class="card">
+      <div id="standings-area"><div class="loading-state">Cargando...</div></div>
+    </div>
   </div>
 
-  <!-- HEAD TO HEAD -->
-  <div class="card">
-    <div class="card-title">Head to Head</div>
-    <div id="h2h-area"><div class="loading-state">Cargando...</div></div>
+  <div class="tab-panel" id="panel-history">
+    <div class="card">
+      <div id="history-area"><div class="loading-state">Cargando...</div></div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="panel-h2h">
+    <div class="card">
+      <div id="h2h-area"><div class="loading-state">Cargando...</div></div>
+    </div>
   </div>
 
 </div>
@@ -175,16 +185,23 @@ const PALETTE = [
   { dot:'#5A8A2A', winBg:'#5A8A2A', lossBg:'#97BB6A', bg:'#EAF5DC', color:'#2A4A0A', border:'#5A8A2A' },
 ];
 
-// Parejas base — se cargan desde localStorage si hay guardadas
 const DEFAULT_TEAMS = ['Agus / Martin', 'Gonza / Fran', 'Alan / Hernán'];
-
-let teams = JSON.parse(localStorage.getItem('pp_teams') || 'null') || DEFAULT_TEAMS.map(name => ({ name, short: name.replace(' / ', '/') }));
+let teams = JSON.parse(localStorage.getItem('pp_teams') || 'null') || DEFAULT_TEAMS.map(n => ({ name: n, short: n.replace(' / ', '/') }));
 let selected = [];
 let matches = [];
+let activeTab = 'standings';
 
 function saveTeams() { localStorage.setItem('pp_teams', JSON.stringify(teams)); }
-
 function teamPalette(i) { return PALETTE[i % PALETTE.length]; }
+
+// ── TABS ──
+function switchTab(tab) {
+  activeTab = tab;
+  ['standings', 'history', 'h2h'].forEach(t => {
+    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+    document.getElementById('panel-' + t).classList.toggle('active', t === tab);
+  });
+}
 
 // ── SYNC ──
 function setSyncState(state, label) {
@@ -220,7 +237,6 @@ async function loadMatches() {
   renderAll();
 }
 
-// ── ENVIAR GET (escrituras con no-cors) ──
 async function sendGet(params) {
   const url = SCRIPT_URL + '?' + new URLSearchParams(params).toString();
   await fetch(url, { mode: 'no-cors', redirect: 'follow' });
@@ -231,9 +247,7 @@ function addTeam() {
   const input = document.getElementById('new-team-input');
   const raw = input.value.trim();
   if (!raw) return;
-  if (teams.find(t => t.name.toLowerCase() === raw.toLowerCase())) {
-    alert('Esa pareja ya existe.'); return;
-  }
+  if (teams.find(t => t.name.toLowerCase() === raw.toLowerCase())) { alert('Esa pareja ya existe.'); return; }
   teams.push({ name: raw, short: raw.replace(' / ', '/') });
   saveTeams();
   input.value = '';
@@ -243,7 +257,7 @@ function addTeam() {
 }
 
 function removeTeam(idx) {
-  if (!confirm(`¿Eliminar la pareja "${teams[idx].name}"? Los partidos ya cargados de esta pareja no se borran.`)) return;
+  if (!confirm('Eliminar la pareja "' + teams[idx].name + '"?')) return;
   selected = selected.filter(s => s !== idx).map(s => s > idx ? s - 1 : s);
   teams.splice(idx, 1);
   saveTeams();
@@ -257,25 +271,24 @@ function updateHeaderSubtitle() {
   document.getElementById('header-subtitle').textContent = teams.map(t => t.short).join(' · ');
 }
 
-// ── RENDER GRID DE PAREJAS ──
+// ── GRID DE PAREJAS ──
 function renderTeamsGrid() {
   const grid = document.getElementById('teams-grid');
   const cols = Math.min(teams.length, 3);
-  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  grid.style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
   grid.innerHTML = teams.map((t, i) => {
     const p = teamPalette(i);
     const isActive = selected.includes(i);
-    const activeStyle = isActive ? `background:${p.bg};color:${p.color};border:2px solid ${p.border};` : '';
-    return `<div style="display:flex;align-items:center;gap:4px;">
-      <button class="team-btn${isActive?' active':''}" style="${activeStyle}flex:1;" onclick="toggleTeam(${i})">
-        <span class="team-dot-btn" style="background:${p.dot}"></span>${t.short}
-      </button>
-      <button onclick="removeTeam(${i})" title="Eliminar pareja" style="background:none;border:none;cursor:pointer;color:var(--text-tertiary);font-size:13px;padding:4px 6px;border-radius:6px;flex-shrink:0;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text-tertiary)'">✕</button>
-    </div>`;
+    const activeStyle = isActive ? 'background:' + p.bg + ';color:' + p.color + ';border:2px solid ' + p.border + ';' : '';
+    return '<div style="display:flex;align-items:center;gap:4px;">' +
+      '<button class="team-btn' + (isActive ? ' active' : '') + '" style="' + activeStyle + 'flex:1;" onclick="toggleTeam(' + i + ')">' +
+        '<span class="team-dot-btn" style="background:' + p.dot + '"></span>' + t.short +
+      '</button>' +
+      '<button onclick="removeTeam(' + i + ')" title="Eliminar" style="background:none;border:none;cursor:pointer;color:var(--text-tertiary);font-size:13px;padding:4px 6px;border-radius:6px;flex-shrink:0;" onmouseover="this.style.color=\'var(--red)\'" onmouseout="this.style.color=\'var(--text-tertiary)\'">&#10005;</button>' +
+    '</div>';
   }).join('');
 }
 
-// ── TOGGLE SELECCIÓN ──
 function toggleTeam(idx) {
   const i = selected.indexOf(idx);
   if (i === -1) selected.push(idx); else selected.splice(i, 1);
@@ -284,7 +297,7 @@ function toggleTeam(idx) {
   renderForm();
 }
 
-// ── FORMULARIO DE PARTIDO ──
+// ── FORMULARIO ──
 function renderForm() {
   const area = document.getElementById('form-area');
   if (selected.length < 2) {
@@ -297,32 +310,33 @@ function renderForm() {
       pairs.push([selected[i], selected[j]]);
 
   let html = '';
-  pairs.forEach(([a, b], pi) => {
-    html += `<div class="matchup" data-a="${a}" data-b="${b}">
-      <span class="matchup-name">${teams[a].short}</span>
-      <div class="score-wrap">
-        <input type="number" min="0" id="sa_${pi}" placeholder="0">
-        <span class="score-sep">–</span>
-        <input type="number" min="0" id="sb_${pi}" placeholder="0">
-      </div>
-      <span class="matchup-name right">${teams[b].short}</span>
-    </div>`;
+  pairs.forEach(function(pair, pi) {
+    const a = pair[0], b = pair[1];
+    html += '<div class="matchup" data-a="' + a + '" data-b="' + b + '">' +
+      '<span class="matchup-name">' + teams[a].short + '</span>' +
+      '<div class="score-wrap">' +
+        '<input type="number" min="0" id="sa_' + pi + '" placeholder="0">' +
+        '<span class="score-sep">–</span>' +
+        '<input type="number" min="0" id="sb_' + pi + '" placeholder="0">' +
+      '</div>' +
+      '<span class="matchup-name right">' + teams[b].short + '</span>' +
+    '</div>';
   });
-  html += `<button class="btn-primary" id="save-btn" onclick="saveMatch()">Guardar partido</button>`;
+  html += '<button class="btn-primary" id="save-btn" onclick="saveMatch()">Guardar partido</button>';
   area.innerHTML = html;
 }
 
-// ── GUARDAR PARTIDO ──
+// ── GUARDAR ──
 async function saveMatch() {
   const rows = document.querySelectorAll('#form-area .matchup');
   const results = [];
   let valid = true;
-  rows.forEach((row, pi) => {
+  rows.forEach(function(row, pi) {
     const a = parseInt(row.dataset.a), b = parseInt(row.dataset.b);
-    const sa = parseInt(document.getElementById(`sa_${pi}`).value);
-    const sb = parseInt(document.getElementById(`sb_${pi}`).value);
+    const sa = parseInt(document.getElementById('sa_' + pi).value);
+    const sb = parseInt(document.getElementById('sb_' + pi).value);
     if (isNaN(sa) || isNaN(sb) || sa < 0 || sb < 0 || sa === sb) { valid = false; return; }
-    results.push({ a, b, sa, sb });
+    results.push({ a: a, b: b, sa: sa, sb: sb });
   });
   if (!valid || results.length === 0) { alert('Completá todos los resultados. No puede haber empates.'); return; }
 
@@ -332,8 +346,9 @@ async function saveMatch() {
 
   const ts = Date.now();
   try {
-    for (const r of results) {
-      await sendGet({ action: 'add', ts, equipo_a: teams[r.a].name, equipo_b: teams[r.b].name, score_a: r.sa, score_b: r.sb });
+    for (let i = 0; i < results.length; i++) {
+      const r = results[i];
+      await sendGet({ action: 'add', ts: ts, equipo_a: teams[r.a].name, equipo_b: teams[r.b].name, score_a: r.sa, score_b: r.sb });
     }
     selected = [];
     renderTeamsGrid();
@@ -347,16 +362,13 @@ async function saveMatch() {
   }
 }
 
-// ── BORRAR PARTIDO ──
-// El delete usa GET con no-cors, igual que el add — no podemos leer la respuesta,
-// por eso recargamos después de un delay para que el sheet procese
+// ── BORRAR ──
 async function deleteMatch(tsVal) {
-  if (!confirm('¿Borrar este partido?')) return;
+  if (!confirm('Borrar este partido?')) return;
   setSyncState('loading', 'Borrando...'); showError('');
   try {
     await sendGet({ action: 'delete', ts: tsVal });
-    // Optimistic UI: borramos localmente mientras el sheet procesa
-    matches = matches.filter(m => m.ts !== tsVal);
+    matches = matches.filter(function(m) { return m.ts !== tsVal; });
     renderAll();
     setSyncState('loading', 'Confirmando...');
     await delay(2000);
@@ -367,43 +379,40 @@ async function deleteMatch(tsVal) {
   }
 }
 
-function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+function delay(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
 
-// ── RENDER TODOS ──
 function renderAll() {
   renderStandings();
   renderHistory();
   renderH2H();
 }
 
-// ── TABLA DE POSICIONES ──
+// ── POSICIONES ──
 function renderStandings() {
-  const stats = teams.map((_, i) => ({ idx: i, pj: 0, g: 0, p: 0, pf: 0, pc: 0 }));
-  matches.forEach(m => {
+  const stats = teams.map(function(_, i) { return { idx: i, pj: 0, g: 0, p: 0, pf: 0, pc: 0 }; });
+  matches.forEach(function(m) {
     if (m.a >= stats.length || m.b >= stats.length) return;
     const a = stats[m.a], b = stats[m.b];
     a.pj++; b.pj++; a.pf += m.sa; a.pc += m.sb; b.pf += m.sb; b.pc += m.sa;
     if (m.sa > m.sb) { a.g++; b.p++; } else { b.g++; a.p++; }
   });
-  stats.sort((x, y) => y.g !== x.g ? y.g - x.g : (y.pf - y.pc) - (x.pf - x.pc));
-  const rows = stats.map((s, rank) => {
+  stats.sort(function(x, y) { return y.g !== x.g ? y.g - x.g : (y.pf - y.pc) - (x.pf - x.pc); });
+  const rows = stats.map(function(s, rank) {
     const dp = s.pf - s.pc;
     const dpStr = s.pj === 0 ? '–' : (dp > 0 ? '+' + dp : String(dp));
     const dpClass = dp > 0 ? 'dp-pos' : dp < 0 ? 'dp-neg' : '';
     const p = teamPalette(s.idx);
-    return `<tr>
-      <td class="left"><span class="rank">${rank+1}.</span><span class="dot" style="background:${p.dot}"></span>${teams[s.idx].short}</td>
-      <td>${s.pj}</td><td>${s.g}</td><td>${s.p}</td><td>${s.pf}</td><td>${s.pc}</td>
-      <td class="${dpClass}">${dpStr}</td></tr>`;
+    return '<tr>' +
+      '<td class="left"><span class="rank">' + (rank+1) + '.</span><span class="dot" style="background:' + p.dot + '"></span>' + teams[s.idx].short + '</td>' +
+      '<td>' + s.pj + '</td><td>' + s.g + '</td><td>' + s.p + '</td><td>' + s.pf + '</td><td>' + s.pc + '</td>' +
+      '<td class="' + dpClass + '">' + dpStr + '</td></tr>';
   }).join('');
-  document.getElementById('standings-area').innerHTML = `
-    <table class="standings-table">
-      <thead><tr>
-        <th class="left" style="width:36%">Pareja</th>
-        <th style="width:10%">PJ</th><th style="width:10%">G</th><th style="width:10%">P</th>
-        <th style="width:10%">PF</th><th style="width:10%">PC</th><th style="width:14%">DP</th>
-      </tr></thead><tbody>${rows}</tbody>
-    </table>`;
+  document.getElementById('standings-area').innerHTML =
+    '<table class="standings-table"><thead><tr>' +
+    '<th class="left" style="width:36%">Pareja</th>' +
+    '<th style="width:10%">PJ</th><th style="width:10%">G</th><th style="width:10%">P</th>' +
+    '<th style="width:10%">PF</th><th style="width:10%">PC</th><th style="width:14%">DP</th>' +
+    '</tr></thead><tbody>' + rows + '</tbody></table>';
 }
 
 // ── HISTORIAL ──
@@ -411,20 +420,21 @@ function renderHistory() {
   const area = document.getElementById('history-area');
   if (matches.length === 0) { area.innerHTML = '<p class="empty">Todavía no hay partidos cargados</p>'; return; }
   const grouped = {};
-  matches.forEach(m => { if (!grouped[m.ts]) grouped[m.ts] = []; grouped[m.ts].push(m); });
-  const tsList = Object.keys(grouped).map(Number).sort((a, b) => b - a);
+  matches.forEach(function(m) { if (!grouped[m.ts]) grouped[m.ts] = []; grouped[m.ts].push(m); });
+  const tsList = Object.keys(grouped).map(Number).sort(function(a, b) { return b - a; });
   let html = '';
-  tsList.forEach(ts => {
+  tsList.forEach(function(ts) {
     const date = new Date(ts).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' });
-    grouped[ts].forEach(m => {
+    grouped[ts].forEach(function(m) {
       const winner = m.sa > m.sb ? teams[m.a].short : teams[m.b].short;
-      html += `<div class="history-item">
-        <div>
-          <div class="history-teams">${teams[m.a].short} ${m.sa} – ${m.sb} ${teams[m.b].short}<span class="winner-tag">Gana ${winner}</span></div>
-          <div class="history-date">${date}</div>
-        </div>
-        <button class="del-btn" onclick="deleteMatch(${ts})">✕</button>
-      </div>`;
+      html += '<div class="history-item">' +
+        '<div>' +
+          '<div class="history-teams">' + teams[m.a].short + ' ' + m.sa + ' – ' + m.sb + ' ' + teams[m.b].short +
+            '<span class="winner-tag">Gana ' + winner + '</span></div>' +
+          '<div class="history-date">' + date + '</div>' +
+        '</div>' +
+        '<button class="del-btn" onclick="deleteMatch(' + ts + ')">&#10005;</button>' +
+      '</div>';
     });
   });
   area.innerHTML = html;
@@ -435,9 +445,9 @@ function renderH2H() {
   const area = document.getElementById('h2h-area');
   if (matches.length === 0) { area.innerHTML = '<p class="empty">Todavía no hay partidos cargados</p>'; return; }
 
-  // Construir matriz h2h[i][j]
-  const h2h = teams.map(() => teams.map(() => ({ w: 0, l: 0, pf: 0, pc: 0 })));
-  matches.forEach(({ a, b, sa, sb }) => {
+  const h2h = teams.map(function() { return teams.map(function() { return { w: 0, l: 0, pf: 0, pc: 0 }; }); });
+  matches.forEach(function(m) {
+    const a = m.a, b = m.b, sa = m.sa, sb = m.sb;
     if (a >= teams.length || b >= teams.length) return;
     h2h[a][b].pf += sa; h2h[a][b].pc += sb;
     h2h[b][a].pf += sb; h2h[b][a].pc += sa;
@@ -446,42 +456,42 @@ function renderH2H() {
   });
 
   let html = '';
-  teams.forEach((team, i) => {
+  teams.forEach(function(team, i) {
     const pi = teamPalette(i);
-    const opponents = teams.map((_, j) => j).filter(j => j !== i);
-    html += `<div class="h2h-section">
-      <div class="h2h-title">
-        <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${pi.dot}"></span>
-        ${team.short}
-      </div>`;
-    opponents.forEach(j => {
+    html += '<div class="h2h-section">' +
+      '<div class="h2h-title">' +
+        '<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:' + pi.dot + '"></span>' +
+        team.short +
+      '</div>';
+
+    teams.forEach(function(_, j) {
+      if (j === i) return;
       const pj = teamPalette(j);
       const d = h2h[i][j];
       const total = d.w + d.l;
       const dp = d.pf - d.pc;
       const dpStr = dp === 0 ? '0' : (dp > 0 ? '+' + dp : String(dp));
+      const dpColor = dp > 0 ? 'var(--green)' : dp < 0 ? 'var(--red)' : 'var(--text-tertiary)';
+
       let barsHtml = '';
       if (total === 0) {
-        barsHtml = `<div class="h2h-bar-none">Sin partidos</div>`;
+        barsHtml = '<div class="h2h-bar-none">Sin partidos</div>';
       } else {
-        // Usar flex proporcional; mínimo visual de 0.5 para que se vea la barra aunque sea 0
-        const wFlex = d.w > 0 ? d.w : 0;
-        const lFlex = d.l > 0 ? d.l : 0;
-        barsHtml = `
-          ${wFlex > 0 ? `<div class="h2h-bar-w" style="flex:${wFlex};background:${pi.winBg}">${d.w}</div>` : ''}
-          ${lFlex > 0 ? `<div class="h2h-bar-l" style="flex:${lFlex};background:${pj.winBg}">${d.l}</div>` : ''}`;
-        // Si uno de los dos es 0 agregar barra residual
-        if (wFlex === 0) barsHtml = `<div style="flex:0.08;background:${pi.winBg}"></div>` + barsHtml;
-        if (lFlex === 0) barsHtml += `<div style="flex:0.08;background:${pj.winBg}"></div>`;
+        if (d.w > 0) barsHtml += '<div class="h2h-bar-w" style="flex:' + d.w + ';background:' + pi.winBg + '">' + d.w + '</div>';
+        else barsHtml += '<div style="flex:0.06;background:' + pi.winBg + '"></div>';
+        if (d.l > 0) barsHtml += '<div class="h2h-bar-l" style="flex:' + d.l + ';background:' + pj.winBg + '">' + d.l + '</div>';
+        else barsHtml += '<div style="flex:0.06;background:' + pj.winBg + '"></div>';
       }
-      html += `<div class="h2h-row">
-        <div class="h2h-label">${teams[j].short}</div>
-        <div class="h2h-bars">${barsHtml}</div>
-        <div class="h2h-stat">${total > 0 ? `${d.w}G – ${d.l}P<br><span style="color:${dp>0?'var(--green)':dp<0?'var(--red)':'var(--text-tertiary)'}">${dpStr} pts</span>` : '–'}</div>
-      </div>`;
+
+      html += '<div class="h2h-row">' +
+        '<div class="h2h-label">' + teams[j].short + '</div>' +
+        '<div class="h2h-bars">' + barsHtml + '</div>' +
+        '<div class="h2h-stat">' + (total > 0 ? d.w + 'G – ' + d.l + 'P<br><span style="color:' + dpColor + '">' + dpStr + ' pts</span>' : '–') + '</div>' +
+      '</div>';
     });
-    html += `</div>`;
-    if (i < teams.length - 1) html += `<div class="h2h-divider"></div>`;
+
+    html += '</div>';
+    if (i < teams.length - 1) html += '<div class="h2h-divider"></div>';
   });
 
   area.innerHTML = html;
