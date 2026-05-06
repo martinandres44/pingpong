@@ -252,7 +252,7 @@ async function loadMatches() {
   setSyncState('loading', 'Cargando...');
   showError('');
   try {
-    const res = await fetch(SCRIPT_URL, { redirect: 'follow' });
+    const res = await fetch(SCRIPT_URL + '?_t=' + Date.now(), { redirect: 'follow' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     matches = data.map(r => ({
