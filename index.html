@@ -56,8 +56,6 @@
   .team-btn:hover { background: var(--bg); }
   .team-btn.active { border-width: 2px; }
   .team-dot-btn { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .remove-team-btn { background: none; border: none; cursor: pointer; color: var(--text-tertiary); font-size: 13px; padding: 4px 6px; border-radius: 6px; flex-shrink: 0; }
-  .remove-team-btn:hover { color: var(--red); background: #FCEBEB; }
 
   .add-team-row { display: flex; gap: 8px; margin-top: 8px; }
   .add-team-input { flex: 1; padding: 8px 12px; border-radius: var(--radius-sm); border: 0.5px solid var(--border-strong); background: var(--bg); color: var(--text); font-size: 13px; }
@@ -306,16 +304,6 @@ function addTeam() {
   updateHeaderSubtitle();
 }
 
-function removeTeam(idx) {
-  if (!confirm('Eliminar la pareja "' + teams[idx].name + '"?')) return;
-  selected = selected.filter(s => s !== idx).map(s => s > idx ? s-1 : s);
-  teams.splice(idx, 1);
-  saveTeams();
-  renderTeamsGrid();
-  renderForm();
-  renderAll();
-  updateHeaderSubtitle();
-}
 
 function updateHeaderSubtitle() {
   document.getElementById('header-subtitle').textContent = teams.map(t => t.short).join(' · ');
@@ -331,7 +319,6 @@ function renderTeamsGrid() {
       '<button class="team-btn' + (isActive?' active':'') + '" style="'+activeStyle+'" onclick="toggleTeam('+i+')">' +
         '<span class="team-dot-btn" style="background:'+p.dot+'"></span>' + t.short +
       '</button>' +
-      '<button class="remove-team-btn" onclick="removeTeam('+i+')" title="Eliminar">&#10005;</button>' +
     '</div>';
   }).join('');
 }
