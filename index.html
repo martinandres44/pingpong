@@ -2,9 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Campeonato Ping Pong KO</title>
 </head>
@@ -206,7 +206,8 @@
 </div>
 
 <script>
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbygUewo35TfR6nP6HDQP-pT3w31u4JuU4Xt57yHfJ4GbClEdgd9OJzU83Xid66ah1js/exec';
+// ── URL ACTUALIZADA + cache-busting ──
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxJIE2zEF9yXklMAgMy2PiDGX7YReZXX1oYSnuNGll4pkn11xSWtmEZlFbdDC4_b9Ls/exec';
 
 const PALETTE = [
   { dot:'#378ADD', winBg:'#378ADD', bg:'#E6F1FB', color:'#0C447C', border:'#378ADD' },
@@ -220,7 +221,7 @@ const PALETTE = [
 const DEFAULT_TEAMS = ['Agus / Martin', 'Gonza / Fran', 'Alan / Hernán'];
 let teams = JSON.parse(localStorage.getItem('pp_teams') || 'null') || DEFAULT_TEAMS.map(n => ({ name: n, short: n.replace(' / ', '/') }));
 let torneoActual = parseInt(localStorage.getItem('pp_torneo') || '1');
-let selectedHistTorneo = torneoActual; // chip seleccionado en historial
+let selectedHistTorneo = torneoActual;
 let selected = [];
 let matches = [];
 
@@ -247,14 +248,16 @@ function showError(msg) {
   b.textContent = msg;
 }
 
-// ── CARGAR DATOS ──
+// ── CARGAR DATOS (con cache-busting) ──
 async function loadMatches() {
   setSyncState('loading', 'Cargando...');
   showError('');
   try {
-    const res = await fetch(SCRIPT_URL + '?_t=' + Date.now(), { redirect: 'follow' });
+    const res = await fetch(SCRIPT_URL + '?_t=' + Date.now(), { redirect: 'follow', cache: 'no-store' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
-    const data = await res.json();
+    const json = await res.json();
+    // Soporta tanto respuesta directa (array) como envuelta ({ t, data })
+    const data = Array.isArray(json) ? json : (json.data || []);
     matches = data.map(r => ({
       ts: Number(r.ts),
       a: teams.findIndex(t => t.name === r.equipo_a),
@@ -307,7 +310,6 @@ function addTeam() {
   renderForm();
   updateHeaderSubtitle();
 }
-
 
 function updateHeaderSubtitle() {
   document.getElementById('header-subtitle').textContent = teams.map(t => t.short).join(' · ');
@@ -443,7 +445,6 @@ function renderStandings() {
 // ── HISTORIAL (con selector de torneo) ──
 function renderHistory() {
   const torneos = [...new Set(matches.map(m => m.torneo))].sort((a,b)=>a-b);
-  // Chips
   const selectorEl = document.getElementById('torneo-selector');
   if (torneos.length === 0) {
     selectorEl.innerHTML = '';
@@ -451,7 +452,6 @@ function renderHistory() {
     const allTorneos = [...torneos];
     if (!allTorneos.includes(torneoActual)) allTorneos.push(torneoActual);
     allTorneos.sort((a,b)=>a-b);
-    // ensure selectedHistTorneo is valid
     if (!allTorneos.includes(selectedHistTorneo)) selectedHistTorneo = torneoActual;
     let chips = allTorneos.map(t =>
       '<button class="torneo-chip'+(t===selectedHistTorneo?' active':'')+'" onclick="selectHistTorneo('+t+')">Torneo '+t+'</button>'
