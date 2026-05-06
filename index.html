@@ -339,7 +339,6 @@ function renderTeamsGrid() {
 function toggleTeam(idx) {
   const i = selected.indexOf(idx);
   if (i===-1) selected.push(idx); else selected.splice(i,1);
-  selected.sort();
   renderTeamsGrid();
   renderForm();
 }
