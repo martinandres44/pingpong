@@ -2,12 +2,8 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Campeonato Ping Pong KO</title>
-</head>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -110,6 +106,12 @@
 
   /* H2H */
   .h2h-acum-badge { font-size: 11px; color: var(--text-tertiary); margin-bottom: 1rem; }
+  .palmares { display: flex; gap: 8px; margin-bottom: 1.1rem; flex-wrap: wrap; }
+  .palmares-item { flex: 1; min-width: 80px; background: var(--bg); border-radius: var(--radius-sm); padding: 10px 12px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .palmares-trofeos { font-size: 20px; font-weight: 700; color: var(--text); }
+  .palmares-name { font-size: 11px; color: var(--text-secondary); text-align: center; font-weight: 500; }
+  .palmares-label { font-size: 10px; color: var(--text-tertiary); }
+  .palmares-empty { font-size: 13px; color: var(--text-tertiary); }
   .h2h-section { margin-bottom: 1.2rem; }
   .h2h-section:last-child { margin-bottom: 0; }
   .h2h-title { font-size: 13px; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 7px; }
@@ -165,7 +167,11 @@
   <div class="card">
     <div class="card-title">Parejas</div>
     <div class="teams-grid" id="teams-grid"></div>
-
+    <div class="section-sub">Agregar nueva pareja</div>
+    <div class="add-team-row">
+      <input class="add-team-input" id="new-team-input" type="text" placeholder="Ej: Pedro / Seba" maxlength="40">
+      <button class="btn-sm" onclick="addTeam()">+ Agregar</button>
+    </div>
     <div class="card-title" style="margin-top:1.25rem">Nuevo partido</div>
     <div id="form-area">
       <p class="hint">Seleccioná al menos 2 parejas para cargar un resultado</p>
@@ -180,6 +186,10 @@
   </div>
 
   <div class="tab-panel active" id="panel-standings">
+    <div class="card">
+      <div class="card-title">Palmarés</div>
+      <div id="palmares-area"><div class="loading-state">Cargando...</div></div>
+    </div>
     <div class="card">
       <div id="standings-area"><div class="loading-state">Cargando...</div></div>
     </div>
@@ -202,8 +212,7 @@
 </div>
 
 <script>
-// ── URL ACTUALIZADA + cache-busting ──
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwjCuEGNRlVlvv0hvs4oXuadXqI9E0GDlug21v4WXTQd1zB7CXQkrs1QibwUCl-qwdR/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbygUewo35TfR6nP6HDQP-pT3w31u4JuU4Xt57yHfJ4GbClEdgd9OJzU83Xid66ah1js/exec';
 
 const PALETTE = [
   { dot:'#378ADD', winBg:'#378ADD', bg:'#E6F1FB', color:'#0C447C', border:'#378ADD' },
@@ -214,18 +223,14 @@ const PALETTE = [
   { dot:'#5A8A2A', winBg:'#5A8A2A', bg:'#EAF5DC', color:'#2A4A0A', border:'#5A8A2A' },
 ];
 
-// Parejas fijas — no se pueden agregar ni borrar
-const teams = [
-  { name: 'Agus / Martin',  short: 'Agus/Martin'  },
-  { name: 'Gonza / Fran',   short: 'Gonza/Fran'   },
-  { name: 'Alan / Hernán',  short: 'Alan/Hernán'  },
-];
+const DEFAULT_TEAMS = ['Agus / Martin', 'Gonza / Fran', 'Alan / Hernán'];
+let teams = JSON.parse(localStorage.getItem('pp_teams') || 'null') || DEFAULT_TEAMS.map(n => ({ name: n, short: n.replace(' / ', '/') }));
 let torneoActual = parseInt(localStorage.getItem('pp_torneo') || '1');
-let selectedHistTorneo = torneoActual;
+let selectedHistTorneo = torneoActual; // chip seleccionado en historial
 let selected = [];
 let matches = [];
 
-
+function saveTeams() { localStorage.setItem('pp_teams', JSON.stringify(teams)); }
 function saveTorneo() { localStorage.setItem('pp_torneo', String(torneoActual)); }
 function teamPalette(i) { return PALETTE[i % PALETTE.length]; }
 
@@ -248,16 +253,14 @@ function showError(msg) {
   b.textContent = msg;
 }
 
-// ── CARGAR DATOS (con cache-busting) ──
+// ── CARGAR DATOS ──
 async function loadMatches() {
   setSyncState('loading', 'Cargando...');
   showError('');
   try {
-    const res = await fetch(SCRIPT_URL + '?_t=' + Date.now(), { redirect: 'follow', cache: 'no-store' });
+    const res = await fetch(SCRIPT_URL, { redirect: 'follow' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
-    const json = await res.json();
-    // Soporta tanto respuesta directa (array) como envuelta ({ t, data })
-    const data = Array.isArray(json) ? json : (json.data || []);
+    const data = await res.json();
     matches = data.map(r => ({
       ts: Number(r.ts),
       a: teams.findIndex(t => t.name === r.equipo_a),
@@ -298,7 +301,18 @@ function updateTorneoBanner() {
 }
 
 // ── PAREJAS ──
-
+function addTeam() {
+  const input = document.getElementById('new-team-input');
+  const raw = input.value.trim();
+  if (!raw) return;
+  if (teams.find(t => t.name.toLowerCase() === raw.toLowerCase())) { alert('Esa pareja ya existe.'); return; }
+  teams.push({ name: raw, short: raw.replace(' / ', '/') });
+  saveTeams();
+  input.value = '';
+  renderTeamsGrid();
+  renderForm();
+  updateHeaderSubtitle();
+}
 
 
 function updateHeaderSubtitle() {
@@ -401,7 +415,59 @@ async function deleteMatch(tsVal) {
 }
 
 function delay(ms) { return new Promise(r => setTimeout(r,ms)); }
-function renderAll() { renderStandings(); renderHistory(); renderH2H(); }
+function renderAll() { renderPalmares(); renderStandings(); renderHistory(); renderH2H(); }
+
+// ── PALMARÉS (torneos ganados) ──
+function renderPalmares() {
+  const area = document.getElementById('palmares-area');
+  // Para cada torneo distinto, ver quién ganó (más G, en caso de empate más DP)
+  const torneos = [...new Set(matches.map(m => m.torneo))].sort((a,b)=>a-b);
+  // No contar el torneo actual si todavía está en curso
+  const cerrados = torneos.filter(t => t < torneoActual);
+
+  if (cerrados.length === 0) {
+    area.innerHTML = '<p class="palmares-empty">Todavía no hay torneos finalizados</p>';
+    return;
+  }
+
+  // Contar victorias por pareja
+  const wins = {};
+  teams.forEach((_, i) => { wins[i] = 0; });
+
+  cerrados.forEach(t => {
+    const tm = matches.filter(m => m.torneo === t);
+    if (tm.length === 0) return;
+    const stats = teams.map((_,i) => ({idx:i, g:0, pf:0, pc:0}));
+    tm.forEach(m => {
+      if (m.a >= stats.length || m.b >= stats.length) return;
+      if (m.sa > m.sb) { stats[m.a].g++; } else { stats[m.b].g++; }
+      stats[m.a].pf += m.sa; stats[m.a].pc += m.sb;
+      stats[m.b].pf += m.sb; stats[m.b].pc += m.sa;
+    });
+    stats.sort((x,y) => y.g !== x.g ? y.g - x.g : (y.pf - y.pc) - (x.pf - x.pc));
+    const winner = stats[0].idx;
+    if (wins[winner] !== undefined) wins[winner]++;
+  });
+
+  const sorted = teams.map((_,i) => i).sort((a,b) => wins[b] - wins[a]);
+  let html = '<div class="palmares">';
+  sorted.forEach(i => {
+    const p = teamPalette(i);
+    const w = wins[i] || 0;
+    html += '<div class="palmares-item">' +
+      '<div style="display:flex;align-items:center;gap:5px;">' +
+        (w > 0 ? '<span style="font-size:16px;">🏆</span>' : '<span style="font-size:16px;opacity:0.3;">🏆</span>') +
+        '<span class="palmares-trofeos" style="color:' + (w > 0 ? p.dot : 'var(--text-tertiary)') + '">' + w + '</span>' +
+      '</div>' +
+      '<div class="palmares-name"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:' + p.dot + ';margin-right:4px;vertical-align:middle;"></span>' + teams[i].short + '</div>' +
+      '<div class="palmares-label">' + (w === 1 ? '1 torneo' : w + ' torneos') + '</div>' +
+    '</div>';
+  });
+  html += '</div>';
+  html += '<div style="font-size:11px;color:var(--text-tertiary);">Basado en ' + cerrados.length + ' torneo' + (cerrados.length > 1 ? 's' : '') + ' finalizado' + (cerrados.length > 1 ? 's' : '') + '</div>';
+  area.innerHTML = html;
+}
+
 
 // ── POSICIONES (solo torneo activo) ──
 function renderStandings() {
@@ -435,6 +501,7 @@ function renderStandings() {
 // ── HISTORIAL (con selector de torneo) ──
 function renderHistory() {
   const torneos = [...new Set(matches.map(m => m.torneo))].sort((a,b)=>a-b);
+  // Chips
   const selectorEl = document.getElementById('torneo-selector');
   if (torneos.length === 0) {
     selectorEl.innerHTML = '';
@@ -442,6 +509,7 @@ function renderHistory() {
     const allTorneos = [...torneos];
     if (!allTorneos.includes(torneoActual)) allTorneos.push(torneoActual);
     allTorneos.sort((a,b)=>a-b);
+    // ensure selectedHistTorneo is valid
     if (!allTorneos.includes(selectedHistTorneo)) selectedHistTorneo = torneoActual;
     let chips = allTorneos.map(t =>
       '<button class="torneo-chip'+(t===selectedHistTorneo?' active':'')+'" onclick="selectHistTorneo('+t+')">Torneo '+t+'</button>'
