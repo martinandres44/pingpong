@@ -175,7 +175,12 @@
       <div id="palmares-area"><p class="empty">Todavía no hay torneos finalizados</p></div>
     </div>
     <div class="card">
+      <div class="card-title" style="margin-bottom:0.5rem">Torneo activo</div>
       <div id="standings-area"><div class="loading-state">Cargando...</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="margin-bottom:0.5rem">Acumulado histórico</div>
+      <div id="standings-total-area"><div class="loading-state">Cargando...</div></div>
     </div>
   </div>
 
@@ -412,6 +417,7 @@ function renderAll() {
   renderTeamsGrid();
   renderPalmares();
   renderStandings();
+  renderStandingsTotal();
   renderHistory();
   renderH2H();
 }
@@ -476,6 +482,30 @@ function renderStandings() {
     '<th style="width:10%">P</th><th style="width:10%">PF</th><th style="width:10%">PC</th><th style="width:14%">DP</th>' +
     '</tr></thead><tbody>'+rows+'</tbody></table>';
 }
+
+// ── POSICIONES ACUMULADAS ──
+function renderStandingsTotal() {
+  const stats = teams.map((_,i) => ({idx:i,pj:0,g:0,p:0,pf:0,pc:0}));
+  matches.forEach(m => {
+    if (m.a>=stats.length||m.b>=stats.length) return;
+    const a=stats[m.a],b=stats[m.b];
+    a.pj++;b.pj++;a.pf+=m.sa;a.pc+=m.sb;b.pf+=m.sb;b.pc+=m.sa;
+    if(m.sa>m.sb){a.g++;b.p++;}else{b.g++;a.p++;}
+  });
+  stats.sort((x,y) => y.g!==x.g?y.g-x.g:(y.pf-y.pc)-(x.pf-x.pc));
+  const rows = stats.map((s,rank) => {
+    const dp=s.pf-s.pc, dpStr=s.pj===0?'–':(dp>0?'+'+dp:String(dp)), dpClass=dp>0?'dp-pos':dp<0?'dp-neg':'';
+    const p=teamPalette(s.idx);
+    return '<tr><td class="left"><span class="rank">'+(rank+1)+'.</span><span class="dot" style="background:'+p.dot+'"></span>'+teams[s.idx].short+'</td>' +
+      '<td>'+s.pj+'</td><td>'+s.g+'</td><td>'+s.p+'</td><td>'+s.pf+'</td><td>'+s.pc+'</td><td class="'+dpClass+'">'+dpStr+'</td></tr>';
+  }).join('');
+  document.getElementById('standings-total-area').innerHTML =
+    '<table class="standings-table"><thead><tr>' +
+    '<th class="left" style="width:36%">Pareja</th><th style="width:10%">PJ</th><th style="width:10%">G</th>' +
+    '<th style="width:10%">P</th><th style="width:10%">PF</th><th style="width:10%">PC</th><th style="width:14%">DP</th>' +
+    '</tr></thead><tbody>'+rows+'</tbody></table>';
+}
+
 
 // ── HISTORIAL ──
 function renderHistory() {
