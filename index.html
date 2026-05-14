@@ -208,13 +208,13 @@ const PALETTE = [
 
 // Parejas fijas en el HTML — se pueden agregar pero se guardan en localStorage
 // como antes, igual que la versión que funcionaba
-const DEFAULT_TEAMS = [
+const TEAMS = [
   { name: 'Agus / Martin', short: 'Agus/Martin' },
   { name: 'Gonza / Fran',  short: 'Gonza/Fran'  },
   { name: 'Alan / Hernán', short: 'Alan/Hernán'  },
 ];
 
-let teams = JSON.parse(localStorage.getItem('pp_teams') || 'null') || DEFAULT_TEAMS;
+let teams = TEAMS;
 let torneoActual = 1; // se lee del sheet
 let matches = [];
 let selected = [];
@@ -305,7 +305,6 @@ function addTeam() {
   if (!raw) return;
   if (teams.find(t => t.name.toLowerCase() === raw.toLowerCase())) { alert('Esa pareja ya existe.'); return; }
   teams.push({ name: raw, short: raw.replace(' / ', '/') });
-  localStorage.setItem('pp_teams', JSON.stringify(teams));
   input.value = '';
   renderTeamsGrid();
   renderForm();
