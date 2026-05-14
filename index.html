@@ -32,16 +32,13 @@
   .card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem; }
   .card-title { font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 1rem; }
 
-  /* TORNEO BANNER */
   .torneo-banner { display: flex; align-items: center; justify-content: space-between; background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 0.9rem 1.1rem; margin-bottom: 1rem; gap: 12px; }
   .torneo-info { display: flex; flex-direction: column; gap: 1px; }
   .torneo-label { font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
   .torneo-name { font-size: 15px; font-weight: 600; color: var(--text); }
   .btn-nuevo-torneo { padding: 8px 14px; border-radius: var(--radius-sm); border: 0.5px solid var(--border-strong); background: transparent; color: var(--text); font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
   .btn-nuevo-torneo:hover { background: var(--bg); }
-  .btn-nuevo-torneo:disabled { opacity: 0.4; cursor: not-allowed; }
 
-  /* TABS */
   .tabs-bar { display: flex; gap: 4px; background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 5px; margin-bottom: 1rem; }
   .tab-btn { flex: 1; padding: 9px 4px; border-radius: var(--radius-sm); border: none; background: transparent; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text-secondary); }
   .tab-btn:hover { background: var(--bg); color: var(--text); }
@@ -49,10 +46,9 @@
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
 
-  /* TEAMS */
   .teams-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 1rem; }
   .team-wrapper { display: flex; align-items: center; gap: 4px; min-width: 120px; flex: 1; }
-  .team-btn { padding: 10px 8px; border-radius: var(--radius-sm); border: 0.5px solid var(--border-strong); background: transparent; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text); text-align: center; line-height: 1.4; display: flex; align-items: center; justify-content: center; gap: 6px; flex: 1; }
+  .team-btn { padding: 10px 8px; border-radius: var(--radius-sm); border: 0.5px solid var(--border-strong); background: transparent; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text); text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; flex: 1; }
   .team-btn:hover { background: var(--bg); }
   .team-btn.active { border-width: 2px; }
   .team-dot-btn { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
@@ -61,10 +57,8 @@
   .add-team-input::placeholder { color: var(--text-tertiary); }
   .btn-sm { padding: 8px 14px; border-radius: var(--radius-sm); border: none; background: var(--text); color: var(--surface); font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; }
   .btn-sm:hover { opacity: 0.85; }
-  .btn-sm:disabled { opacity: 0.4; cursor: not-allowed; }
   .section-sub { font-size: 11px; color: var(--text-tertiary); margin-bottom: 6px; margin-top: 12px; }
 
-  /* FORM */
   .hint { font-size: 13px; color: var(--text-tertiary); padding: 4px 0; }
   .matchup { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
   .matchup-name { font-size: 13px; font-weight: 500; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -77,14 +71,12 @@
   .btn-primary:hover { opacity: 0.82; }
   .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
 
-  /* PALMARÉS */
   .palmares { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; }
   .palmares-item { flex: 1; min-width: 80px; background: var(--bg); border-radius: var(--radius-sm); padding: 10px 12px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
   .palmares-trofeos { font-size: 20px; font-weight: 700; }
   .palmares-name { font-size: 11px; color: var(--text-secondary); text-align: center; font-weight: 500; }
   .palmares-sub { font-size: 10px; color: var(--text-tertiary); }
 
-  /* TABLA */
   .standings-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 13px; }
   .standings-table th { font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-align: center; padding: 0 4px 10px; border-bottom: 0.5px solid var(--border); }
   .standings-table th.left { text-align: left; }
@@ -96,13 +88,11 @@
   .dp-pos { color: var(--green); font-weight: 600; }
   .dp-neg { color: var(--red); font-weight: 600; }
 
-  /* SELECTOR TORNEO */
   .torneo-selector { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1rem; }
   .torneo-chip { padding: 5px 12px; border-radius: 20px; border: 0.5px solid var(--border-strong); background: transparent; font-size: 12px; font-weight: 500; color: var(--text-secondary); cursor: pointer; }
   .torneo-chip:hover { background: var(--bg); }
   .torneo-chip.active { background: var(--text); color: var(--surface); border-color: var(--text); }
 
-  /* HISTORIAL */
   .history-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: var(--bg); border-radius: var(--radius-sm); margin-bottom: 6px; }
   .history-item:last-child { margin-bottom: 0; }
   .history-teams { font-size: 13px; font-weight: 500; color: var(--text); }
@@ -111,7 +101,6 @@
   .del-btn { background: none; border: none; cursor: pointer; color: var(--text-tertiary); font-size: 16px; padding: 4px 8px; border-radius: 6px; line-height: 1; flex-shrink: 0; }
   .del-btn:hover { background: #FCEBEB; color: var(--red); }
 
-  /* H2H */
   .h2h-acum-badge { font-size: 11px; color: var(--text-tertiary); margin-bottom: 1rem; }
   .h2h-section { margin-bottom: 1.2rem; }
   .h2h-section:last-child { margin-bottom: 0; }
@@ -143,7 +132,7 @@
   <div class="header-icon">🏓</div>
   <div class="header-text">
     <h1>Campeonato Ping Pong KO</h1>
-    <p id="header-subtitle">Cargando...</p>
+    <p id="header-subtitle"></p>
   </div>
   <div class="sync-indicator">
     <div class="sync-dot loading" id="sync-dot"></div>
@@ -159,16 +148,16 @@
       <span class="torneo-label">Torneo activo</span>
       <span class="torneo-name" id="torneo-name">–</span>
     </div>
-    <button class="btn-nuevo-torneo" id="btn-nuevo-torneo" onclick="nuevoTorneo()">🏆 Nuevo torneo</button>
+    <button class="btn-nuevo-torneo" onclick="nuevoTorneo()">🏆 Nuevo torneo</button>
   </div>
 
   <div class="card">
     <div class="card-title">Parejas</div>
-    <div class="teams-grid" id="teams-grid"><div class="loading-state" style="padding:0.5rem 0">Cargando...</div></div>
+    <div class="teams-grid" id="teams-grid"></div>
     <div class="section-sub">Agregar nueva pareja</div>
     <div class="add-team-row">
       <input class="add-team-input" id="new-team-input" type="text" placeholder="Ej: Pedro / Seba" maxlength="40">
-      <button class="btn-sm" id="btn-agregar" onclick="addTeam()">+ Agregar</button>
+      <button class="btn-sm" onclick="addTeam()">+ Agregar</button>
     </div>
     <div class="card-title" style="margin-top:1.25rem">Nuevo partido</div>
     <div id="form-area"><p class="hint">Seleccioná al menos 2 parejas para cargar un resultado</p></div>
@@ -183,7 +172,7 @@
   <div class="tab-panel active" id="panel-standings">
     <div class="card">
       <div class="card-title">Palmarés</div>
-      <div id="palmares-area"><div class="loading-state">Cargando...</div></div>
+      <div id="palmares-area"><p class="empty">Todavía no hay torneos finalizados</p></div>
     </div>
     <div class="card">
       <div id="standings-area"><div class="loading-state">Cargando...</div></div>
@@ -217,15 +206,23 @@ const PALETTE = [
   { dot:'#5A8A2A', winBg:'#5A8A2A', bg:'#EAF5DC', color:'#2A4A0A', border:'#5A8A2A' },
 ];
 
-let teams = [];       // {name, short} — viene del sheet
-let torneoActual = 1; // viene del sheet
-let matches = [];     // viene del sheet
+// Parejas fijas en el HTML — se pueden agregar pero se guardan en localStorage
+// como antes, igual que la versión que funcionaba
+const DEFAULT_TEAMS = [
+  { name: 'Agus / Martin', short: 'Agus/Martin' },
+  { name: 'Gonza / Fran',  short: 'Gonza/Fran'  },
+  { name: 'Alan / Hernán', short: 'Alan/Hernán'  },
+];
+
+let teams = JSON.parse(localStorage.getItem('pp_teams') || 'null') || DEFAULT_TEAMS;
+let torneoActual = 1; // se lee del sheet
+let matches = [];
 let selected = [];
 let selectedHistTorneo = null;
 
 function teamPalette(i) { return PALETTE[i % PALETTE.length]; }
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-// ── SYNC UI ──
 function setSyncState(state, label) {
   document.getElementById('sync-dot').className = 'sync-dot ' + state;
   document.getElementById('sync-label').textContent = label;
@@ -242,32 +239,17 @@ function switchTab(tab) {
   });
 }
 
-// ── FETCH HELPERS ──
-async function fetchJSON(url) {
-  const res = await fetch(url, { redirect: 'follow' });
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  return res.json();
-}
-async function sendGet(params) {
-  const url = SCRIPT_URL + '?' + new URLSearchParams(params).toString();
-  await fetch(url, { mode: 'no-cors', redirect: 'follow' });
-}
-function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-// ── CARGA INICIAL (todo en paralelo) ──
-async function init() {
+// ── CARGA DATOS DEL SHEET ──
+async function loadMatches() {
   setSyncState('loading', 'Cargando...');
   showError('');
   try {
-    const [configData, parejasData, matchesData] = await Promise.all([
-      fetchJSON(SCRIPT_URL + '?action=get_config'),
-      fetchJSON(SCRIPT_URL + '?action=get_parejas'),
-      fetchJSON(SCRIPT_URL),
-    ]);
+    // Una sola llamada GET — igual que la versión que funcionaba
+    const res = await fetch(SCRIPT_URL, { redirect: 'follow' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
 
-    torneoActual = configData.torneo_activo || 1;
-    teams = parejasData.parejas.map(n => ({ name: n, short: n.replace(' / ', '/') }));
-    matches = matchesData.map(r => ({
+    matches = data.map(r => ({
       ts: Number(r.ts),
       a: teams.findIndex(t => t.name === r.equipo_a),
       b: teams.findIndex(t => t.name === r.equipo_b),
@@ -275,6 +257,18 @@ async function init() {
       sb: Number(r.score_b),
       torneo: Number(r.torneo) || 1,
     })).filter(r => r.a >= 0 && r.b >= 0);
+
+    // Torneo activo = el más alto que existe en los datos, o 1
+    const torneos = matches.map(m => m.torneo);
+    const maxEnSheet = torneos.length ? Math.max(...torneos) : 1;
+    // Leemos también del sheet config — pero si falla no bloqueamos
+    try {
+      const cfg = await fetch(SCRIPT_URL + '?action=get_config', { redirect: 'follow' });
+      const cfgData = await cfg.json();
+      torneoActual = cfgData.torneo_activo || maxEnSheet;
+    } catch(e) {
+      torneoActual = maxEnSheet;
+    }
 
     if (selectedHistTorneo === null) selectedHistTorneo = torneoActual;
     setSyncState('ok', 'Sincronizado');
@@ -286,9 +280,9 @@ async function init() {
   renderAll();
 }
 
-async function reload() {
-  setSyncState('loading', 'Actualizando...');
-  await init();
+async function sendGet(params) {
+  const url = SCRIPT_URL + '?' + new URLSearchParams(params).toString();
+  await fetch(url, { mode: 'no-cors', redirect: 'follow' });
 }
 
 // ── NUEVO TORNEO ──
@@ -296,53 +290,30 @@ async function nuevoTorneo() {
   const partidos = matches.filter(m => m.torneo === torneoActual).length;
   const msg = partidos > 0
     ? 'Iniciar Torneo ' + (torneoActual+1) + '?\n\nEl historial y el H2H quedan guardados. Las posiciones se resetean.'
-    : 'El torneo actual no tiene partidos. ¿Querés avanzar igual al siguiente?';
+    : 'El torneo actual no tiene partidos. ¿Querés avanzar igual?';
   if (!confirm(msg)) return;
-
-  const nuevoNum = torneoActual + 1;
-  document.getElementById('btn-nuevo-torneo').disabled = true;
   setSyncState('loading', 'Guardando...');
-  try {
-    await sendGet({ action: 'set_torneo', torneo: nuevoNum });
-    await delay(1500);
-    await reload();
-  } catch(e) {
-    setSyncState('err', 'Error');
-    document.getElementById('btn-nuevo-torneo').disabled = false;
-  }
+  await sendGet({ action: 'set_torneo', torneo: torneoActual + 1 });
+  await delay(1500);
+  await loadMatches();
 }
 
-// ── PAREJAS ──
-async function addTeam() {
+// ── PAREJAS (localStorage como antes) ──
+function addTeam() {
   const input = document.getElementById('new-team-input');
   const raw = input.value.trim();
   if (!raw) return;
   if (teams.find(t => t.name.toLowerCase() === raw.toLowerCase())) { alert('Esa pareja ya existe.'); return; }
-  const btn = document.getElementById('btn-agregar');
-  btn.disabled = true; btn.textContent = 'Guardando...';
-  setSyncState('loading', 'Guardando...');
-  try {
-    await sendGet({ action: 'add_pareja', nombre: raw });
-    input.value = '';
-    await delay(1500);
-    await reload();
-  } catch(e) {
-    setSyncState('err', 'Error');
-  }
-  btn.disabled = false; btn.textContent = '+ Agregar';
-}
-
-function updateHeaderSubtitle() {
+  teams.push({ name: raw, short: raw.replace(' / ', '/') });
+  localStorage.setItem('pp_teams', JSON.stringify(teams));
+  input.value = '';
+  renderTeamsGrid();
+  renderForm();
   document.getElementById('header-subtitle').textContent = teams.map(t => t.short).join(' · ');
 }
-function updateTorneoBanner() {
-  document.getElementById('torneo-name').textContent = 'Torneo ' + torneoActual;
-}
 
-// ── GRID PAREJAS ──
 function renderTeamsGrid() {
   const grid = document.getElementById('teams-grid');
-  if (teams.length === 0) { grid.innerHTML = '<p class="empty">Sin parejas cargadas</p>'; return; }
   grid.innerHTML = teams.map((t, i) => {
     const p = teamPalette(i);
     const isActive = selected.includes(i);
@@ -411,7 +382,7 @@ async function saveMatch() {
     selected=[];
     renderTeamsGrid(); renderForm();
     await delay(1800);
-    await reload();
+    await loadMatches();
   } catch(e) {
     setSyncState('err','Error al guardar');
     showError('No se pudo guardar.');
@@ -429,7 +400,7 @@ async function deleteMatch(tsVal) {
     renderAll();
     setSyncState('loading','Confirmando...');
     await delay(2000);
-    await reload();
+    await loadMatches();
   } catch(e) {
     setSyncState('err','Error al borrar');
   }
@@ -437,10 +408,9 @@ async function deleteMatch(tsVal) {
 
 // ── RENDER ALL ──
 function renderAll() {
-  updateTorneoBanner();
-  updateHeaderSubtitle();
+  document.getElementById('torneo-name').textContent = 'Torneo ' + torneoActual;
+  document.getElementById('header-subtitle').textContent = teams.map(t => t.short).join(' · ');
   renderTeamsGrid();
-  renderForm();
   renderPalmares();
   renderStandings();
   renderHistory();
@@ -451,7 +421,7 @@ function renderAll() {
 function renderPalmares() {
   const area = document.getElementById('palmares-area');
   const cerrados = [...new Set(matches.map(m => m.torneo))].filter(t => t < torneoActual).sort((a,b)=>a-b);
-  if (cerrados.length === 0) { area.innerHTML = '<p class="empty">Todavía no hay torneos finalizados</p>'; return; }
+  if (!cerrados.length) { area.innerHTML = '<p class="empty">Todavía no hay torneos finalizados</p>'; return; }
   const wins = {};
   teams.forEach((_,i) => { wins[i]=0; });
   cerrados.forEach(t => {
@@ -460,12 +430,12 @@ function renderPalmares() {
     const stats = teams.map((_,i) => ({idx:i,g:0,pf:0,pc:0}));
     tm.forEach(m => {
       if (m.a>=stats.length||m.b>=stats.length) return;
-      if (m.sa>m.sb){stats[m.a].g++;}else{stats[m.b].g++;}
+      if (m.sa>m.sb) stats[m.a].g++; else stats[m.b].g++;
       stats[m.a].pf+=m.sa; stats[m.a].pc+=m.sb;
       stats[m.b].pf+=m.sb; stats[m.b].pc+=m.sa;
     });
-    stats.sort((x,y)=>y.g!==x.g?y.g-x.g:(y.pf-y.pc)-(x.pf-x.pc));
-    if (wins[stats[0].idx]!==undefined) wins[stats[0].idx]++;
+    stats.sort((x,y) => y.g!==x.g ? y.g-x.g : (y.pf-y.pc)-(x.pf-x.pc));
+    if (wins[stats[0].idx] !== undefined) wins[stats[0].idx]++;
   });
   const sorted = teams.map((_,i)=>i).sort((a,b)=>wins[b]-wins[a]);
   let html = '<div class="palmares">';
@@ -484,19 +454,19 @@ function renderPalmares() {
   area.innerHTML = html;
 }
 
-// ── POSICIONES (torneo activo) ──
+// ── POSICIONES ──
 function renderStandings() {
   const filtered = matches.filter(m => m.torneo===torneoActual);
-  const stats = teams.map((_,i)=>({idx:i,pj:0,g:0,p:0,pf:0,pc:0}));
+  const stats = teams.map((_,i) => ({idx:i,pj:0,g:0,p:0,pf:0,pc:0}));
   filtered.forEach(m => {
     if (m.a>=stats.length||m.b>=stats.length) return;
     const a=stats[m.a],b=stats[m.b];
     a.pj++;b.pj++;a.pf+=m.sa;a.pc+=m.sb;b.pf+=m.sb;b.pc+=m.sa;
     if(m.sa>m.sb){a.g++;b.p++;}else{b.g++;a.p++;}
   });
-  stats.sort((x,y)=>y.g!==x.g?y.g-x.g:(y.pf-y.pc)-(x.pf-x.pc));
-  const rows=stats.map((s,rank)=>{
-    const dp=s.pf-s.pc,dpStr=s.pj===0?'–':(dp>0?'+'+dp:String(dp)),dpClass=dp>0?'dp-pos':dp<0?'dp-neg':'';
+  stats.sort((x,y) => y.g!==x.g?y.g-x.g:(y.pf-y.pc)-(x.pf-x.pc));
+  const rows = stats.map((s,rank) => {
+    const dp=s.pf-s.pc, dpStr=s.pj===0?'–':(dp>0?'+'+dp:String(dp)), dpClass=dp>0?'dp-pos':dp<0?'dp-neg':'';
     const p=teamPalette(s.idx);
     return '<tr><td class="left"><span class="rank">'+(rank+1)+'.</span><span class="dot" style="background:'+p.dot+'"></span>'+teams[s.idx].short+'</td>' +
       '<td>'+s.pj+'</td><td>'+s.g+'</td><td>'+s.p+'</td><td>'+s.pf+'</td><td>'+s.pc+'</td><td class="'+dpClass+'">'+dpStr+'</td></tr>';
@@ -510,73 +480,70 @@ function renderStandings() {
 
 // ── HISTORIAL ──
 function renderHistory() {
-  const torneos=[...new Set(matches.map(m=>m.torneo))].sort((a,b)=>a-b);
-  const allT=[...new Set([...torneos,torneoActual])].sort((a,b)=>a-b);
-  if (!allT.includes(selectedHistTorneo)) selectedHistTorneo=torneoActual;
-  const chips=allT.map(t=>'<button class="torneo-chip'+(t===selectedHistTorneo?' active':'')+'" onclick="selectHistTorneo('+t+')">T'+t+'</button>').join('');
-  document.getElementById('torneo-selector').innerHTML=chips+'<button class="torneo-chip"+("all"===selectedHistTorneo?" active":"")+'" onclick="selectHistTorneo(\'all\')">'+(selectedHistTorneo==='all'?'<span style="font-weight:600">Todos</span>':'Todos')+'</button>';
-  // fix active on Todos
-  document.getElementById('torneo-selector').innerHTML=allT.map(t=>'<button class="torneo-chip'+(t===selectedHistTorneo?' active':'')+'" onclick="selectHistTorneo('+t+')">T'+t+'</button>').join('')+
+  const torneos = [...new Set(matches.map(m=>m.torneo))].sort((a,b)=>a-b);
+  const allT = [...new Set([...torneos, torneoActual])].sort((a,b)=>a-b);
+  if (!allT.includes(selectedHistTorneo)) selectedHistTorneo = torneoActual;
+  document.getElementById('torneo-selector').innerHTML =
+    allT.map(t => '<button class="torneo-chip'+(t===selectedHistTorneo?' active':'')+'" onclick="selectHistTorneo('+t+')">T'+t+'</button>').join('') +
     '<button class="torneo-chip'+('all'===selectedHistTorneo?' active':'')+'" onclick="selectHistTorneo(\'all\')">Todos</button>';
 
-  const filtered=selectedHistTorneo==='all'?matches:matches.filter(m=>m.torneo===selectedHistTorneo);
-  const area=document.getElementById('history-area');
-  if(!filtered.length){area.innerHTML='<p class="empty">No hay partidos en este torneo</p>';return;}
-  const grouped={};
-  filtered.forEach(m=>{if(!grouped[m.ts])grouped[m.ts]=[];grouped[m.ts].push(m);});
-  const tsList=Object.keys(grouped).map(Number).sort((a,b)=>b-a);
-  let html='';
-  tsList.forEach(ts=>{
-    const date=new Date(ts).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'});
-    grouped[ts].forEach(m=>{
-      const winner=m.sa>m.sb?teams[m.a].short:teams[m.b].short;
-      const tTag=selectedHistTorneo==='all'?' · T'+m.torneo:'';
-      html+='<div class="history-item"><div>' +
+  const filtered = selectedHistTorneo==='all' ? matches : matches.filter(m=>m.torneo===selectedHistTorneo);
+  const area = document.getElementById('history-area');
+  if (!filtered.length) { area.innerHTML='<p class="empty">No hay partidos en este torneo</p>'; return; }
+  const grouped = {};
+  filtered.forEach(m => { if(!grouped[m.ts]) grouped[m.ts]=[]; grouped[m.ts].push(m); });
+  const tsList = Object.keys(grouped).map(Number).sort((a,b)=>b-a);
+  let html = '';
+  tsList.forEach(ts => {
+    const date = new Date(ts).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'});
+    grouped[ts].forEach(m => {
+      const winner = m.sa>m.sb ? teams[m.a].short : teams[m.b].short;
+      const tTag = selectedHistTorneo==='all' ? ' · T'+m.torneo : '';
+      html += '<div class="history-item"><div>' +
         '<div class="history-teams">'+teams[m.a].short+' '+m.sa+' – '+m.sb+' '+teams[m.b].short+'<span class="winner-tag">Gana '+winner+'</span></div>' +
         '<div class="history-meta">'+date+tTag+'</div>' +
         '</div><button class="del-btn" onclick="deleteMatch('+ts+')">&#10005;</button></div>';
     });
   });
-  area.innerHTML=html;
+  area.innerHTML = html;
 }
-
 function selectHistTorneo(t) { selectedHistTorneo=t; renderHistory(); }
 
-// ── H2H (acumulado) ──
+// ── H2H ──
 function renderH2H() {
-  const area=document.getElementById('h2h-area');
-  if(!matches.length){area.innerHTML='<p class="empty">Todavía no hay partidos cargados</p>';return;}
-  const h2h=teams.map(()=>teams.map(()=>({w:0,l:0})));
-  matches.forEach(m=>{
-    if(m.a>=teams.length||m.b>=teams.length)return;
+  const area = document.getElementById('h2h-area');
+  if (!matches.length) { area.innerHTML='<p class="empty">Todavía no hay partidos cargados</p>'; return; }
+  const h2h = teams.map(()=>teams.map(()=>({w:0,l:0})));
+  matches.forEach(m => {
+    if(m.a>=teams.length||m.b>=teams.length) return;
     if(m.sa>m.sb){h2h[m.a][m.b].w++;h2h[m.b][m.a].l++;}
     else{h2h[m.b][m.a].w++;h2h[m.a][m.b].l++;}
   });
   let html='';
-  teams.forEach((team,i)=>{
+  teams.forEach((team,i) => {
     const pi=teamPalette(i);
     html+='<div class="h2h-section"><div class="h2h-title"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:'+pi.dot+'"></span>'+team.short+'</div>';
-    teams.forEach((_,j)=>{
-      if(j===i)return;
+    teams.forEach((_,j) => {
+      if(j===i) return;
       const pj=teamPalette(j),d=h2h[i][j],total=d.w+d.l;
       let bars='';
       if(!total){bars='<div class="h2h-bar-none">Sin partidos</div>';}
       else{
-        if(d.w>0)bars+='<div class="h2h-bar-w" style="flex:'+d.w+';background:'+pi.winBg+'">'+d.w+'</div>';
+        if(d.w>0) bars+='<div class="h2h-bar-w" style="flex:'+d.w+';background:'+pi.winBg+'">'+d.w+'</div>';
         else bars+='<div style="flex:0.06;background:'+pi.winBg+'"></div>';
-        if(d.l>0)bars+='<div class="h2h-bar-l" style="flex:'+d.l+';background:'+pj.winBg+'">'+d.l+'</div>';
+        if(d.l>0) bars+='<div class="h2h-bar-l" style="flex:'+d.l+';background:'+pj.winBg+'">'+d.l+'</div>';
         else bars+='<div style="flex:0.06;background:'+pj.winBg+'"></div>';
       }
       html+='<div class="h2h-row"><div class="h2h-label">'+teams[j].short+'</div><div class="h2h-bars">'+bars+'</div><div class="h2h-stat">'+(total?d.w+'G / '+d.l+'P':'–')+'</div></div>';
     });
     html+='</div>';
-    if(i<teams.length-1)html+='<div class="h2h-divider"></div>';
+    if(i<teams.length-1) html+='<div class="h2h-divider"></div>';
   });
   area.innerHTML=html;
 }
 
 // ── INIT ──
-init();
+loadMatches();
 </script>
 </body>
 </html>
