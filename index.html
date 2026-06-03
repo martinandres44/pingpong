@@ -148,7 +148,10 @@
       <span class="torneo-label">Torneo activo</span>
       <span class="torneo-name" id="torneo-name">–</span>
     </div>
-    <button class="btn-nuevo-torneo" onclick="nuevoTorneo()">🏆 Nuevo torneo</button>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="btn-nuevo-torneo" onclick="renameTorneo()" style="font-size:12px;padding:6px 10px;">✏️ Renombrar</button>
+      <button class="btn-nuevo-torneo" onclick="nuevoTorneo()">🏆 Nuevo torneo</button>
+    </div>
   </div>
 
   <div class="card">
@@ -200,7 +203,7 @@
 </div>
 
 <script>
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw6Sh3sWe5MCAsSeVA_yUI7bIbcQlRlVGRKbYXtBB6KATPGh2zvUCkMhAKtWry92xNN/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxj_8qyZr1YM9w-jTerS3rvGuBDS4y9mq8KztaX2GJUjhNJzEBPZeZzQgcU2kbz4Kl4/exec';
 
 const PALETTE = [
   { dot:'#378ADD', winBg:'#378ADD', bg:'#E6F1FB', color:'#0C447C', border:'#378ADD' },
@@ -220,10 +223,16 @@ const TEAMS = [
 ];
 
 let teams = TEAMS;
+let nombresTorneos = {}; // {1: "Coca-Cola", 2: "Sprite", ...}
 let torneoActual = 1; // se lee del sheet
 let matches = [];
 let selected = [];
 let selectedHistTorneo = null;
+
+function torneoNombre(num) {
+  return nombresTorneos[String(num)] || ('Torneo ' + num);
+}
+
 
 function teamPalette(i) { return PALETTE[i % PALETTE.length]; }
 function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
@@ -266,13 +275,20 @@ async function loadMatches() {
     // Torneo activo = el más alto que existe en los datos, o 1
     const torneos = matches.map(m => m.torneo);
     const maxEnSheet = torneos.length ? Math.max(...torneos) : 1;
-    // Leemos también del sheet config — pero si falla no bloqueamos
+    // Leemos config y nombres
     try {
       const cfg = await fetch(SCRIPT_URL + '?action=get_config', { redirect: 'follow' });
       const cfgData = await cfg.json();
       torneoActual = cfgData.torneo_activo || maxEnSheet;
     } catch(e) {
       torneoActual = maxEnSheet;
+    }
+    try {
+      const nr = await fetch(SCRIPT_URL + '?action=get_nombres_torneos', { redirect: 'follow' });
+      const nrData = await nr.json();
+      nombresTorneos = nrData.nombres || {};
+    } catch(e) {
+      nombresTorneos = {};
     }
 
     if (selectedHistTorneo === null) selectedHistTorneo = torneoActual;
@@ -291,15 +307,32 @@ async function sendGet(params) {
 }
 
 // ── NUEVO TORNEO ──
+async function renameTorneo() {
+  const actual = torneoNombre(torneoActual);
+  const nombre = prompt('Nombre para el torneo actual:', actual);
+  if (!nombre || !nombre.trim()) return;
+  setSyncState('loading', 'Guardando...');
+  await sendGet({ action: 'set_nombre_torneo', torneo: torneoActual, nombre: nombre.trim() });
+  await delay(1500);
+  await loadMatches();
+}
+
+
 async function nuevoTorneo() {
   const partidos = matches.filter(m => m.torneo === torneoActual).length;
   const msg = partidos > 0
-    ? 'Iniciar Torneo ' + (torneoActual+1) + '?\n\nEl historial y el H2H quedan guardados. Las posiciones se resetean.'
+    ? 'Iniciar nuevo torneo?\n\nEl historial y el H2H quedan guardados. Las posiciones se resetean.'
     : 'El torneo actual no tiene partidos. ¿Querés avanzar igual?';
   if (!confirm(msg)) return;
+  const nuevoNum = torneoActual + 1;
+  const nombre = prompt('Nombre del nuevo torneo (ej: Sprite, Fanta, Powerade...):', 'Torneo ' + nuevoNum);
+  if (nombre === null) return; // canceló
   setSyncState('loading', 'Guardando...');
-  await sendGet({ action: 'set_torneo', torneo: torneoActual + 1 });
-  await delay(1500);
+  await sendGet({ action: 'set_torneo', torneo: nuevoNum });
+  if (nombre.trim() && nombre.trim() !== 'Torneo ' + nuevoNum) {
+    await sendGet({ action: 'set_nombre_torneo', torneo: nuevoNum, nombre: nombre.trim() });
+  }
+  await delay(1800);
   await loadMatches();
 }
 
@@ -412,7 +445,7 @@ async function deleteMatch(tsVal) {
 
 // ── RENDER ALL ──
 function renderAll() {
-  document.getElementById('torneo-name').textContent = 'Torneo ' + torneoActual;
+  document.getElementById('torneo-name').textContent = torneoNombre(torneoActual);
   document.getElementById('header-subtitle').textContent = teams.map(t => t.short).join(' · ');
   renderTeamsGrid();
   renderPalmares();
