@@ -675,16 +675,23 @@ function renderH2H() {
   const area = document.getElementById('h2h-area');
   if (!matches.length) { area.innerHTML='<p class="empty">Todavía no hay partidos cargados</p>'; return; }
 
-  // Aplicar filtro: ordenar por ts desc y tomar los N últimos
-  let filteredMatches = [...matches].sort((a,b)=>b.ts-a.ts);
-  if (h2hFilter !== 'all') filteredMatches = filteredMatches.slice(0, h2hFilter);
-
+  // El filtro se aplica por cruce, no sobre el total
   const h2h = teams.map(()=>teams.map(()=>({w:0,l:0})));
-  filteredMatches.forEach(m => {
-    if(m.a>=teams.length||m.b>=teams.length) return;
-    if(m.sa>m.sb){h2h[m.a][m.b].w++;h2h[m.b][m.a].l++;}
-    else{h2h[m.b][m.a].w++;h2h[m.a][m.b].l++;}
+  teams.forEach((_,i) => {
+    teams.forEach((_,j) => {
+      if (j<=i) return;
+      // Partidos de este cruce, ordenados de más reciente a más viejo
+      let cruceMatches = matches
+        .filter(m => (m.a===i&&m.b===j)||(m.a===j&&m.b===i))
+        .sort((a,b)=>b.ts-a.ts);
+      if (h2hFilter !== 'all') cruceMatches = cruceMatches.slice(0, h2hFilter);
+      cruceMatches.forEach(m => {
+        if (m.sa>m.sb){h2h[m.a][m.b].w++;h2h[m.b][m.a].l++;}
+        else{h2h[m.b][m.a].w++;h2h[m.a][m.b].l++;}
+      });
+    });
   });
+
   let html='';
   teams.forEach((team,i) => {
     const pi=teamPalette(i);
