@@ -201,7 +201,11 @@
 
   <div class="tab-panel" id="panel-h2h">
     <div class="card">
-      <div class="h2h-acum-badge">📊 Acumulado de todos los torneos</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem;">
+        <button class="torneo-chip active" id="h2h-chip-all" onclick="setH2HFilter('all')">Todos</button>
+        <button class="torneo-chip" id="h2h-chip-10" onclick="setH2HFilter(10)">Últimos 10</button>
+        <button class="torneo-chip" id="h2h-chip-20" onclick="setH2HFilter(20)">Últimos 20</button>
+      </div>
       <div id="h2h-area"><div class="loading-state">Cargando...</div></div>
     </div>
   </div>
@@ -234,6 +238,7 @@ let matches = [];
 let selected = [];
 let selectedHistTorneo = null;
 let selectedStandingsTorneo = null;
+let h2hFilter = 'all'; // 'all', 10, 20
 
 function torneoNombre(num) {
   return nombresTorneos[String(num)] || ('Torneo ' + num);
@@ -657,11 +662,25 @@ function renderHistory() {
 function selectHistTorneo(t) { selectedHistTorneo=t; renderHistory(); }
 
 // ── H2H ──
+function setH2HFilter(f) {
+  h2hFilter = f;
+  ['all',10,20].forEach(v => {
+    const el = document.getElementById('h2h-chip-'+v);
+    if (el) el.classList.toggle('active', v === f);
+  });
+  renderH2H();
+}
+
 function renderH2H() {
   const area = document.getElementById('h2h-area');
   if (!matches.length) { area.innerHTML='<p class="empty">Todavía no hay partidos cargados</p>'; return; }
+
+  // Aplicar filtro: ordenar por ts desc y tomar los N últimos
+  let filteredMatches = [...matches].sort((a,b)=>b.ts-a.ts);
+  if (h2hFilter !== 'all') filteredMatches = filteredMatches.slice(0, h2hFilter);
+
   const h2h = teams.map(()=>teams.map(()=>({w:0,l:0})));
-  matches.forEach(m => {
+  filteredMatches.forEach(m => {
     if(m.a>=teams.length||m.b>=teams.length) return;
     if(m.sa>m.sb){h2h[m.a][m.b].w++;h2h[m.b][m.a].l++;}
     else{h2h[m.b][m.a].w++;h2h[m.a][m.b].l++;}
