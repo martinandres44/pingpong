@@ -182,6 +182,11 @@
       <div id="standings-area"><div class="loading-state">Cargando...</div></div>
     </div>
     <div class="card">
+      <div class="card-title" style="margin-bottom:0.5rem">Posiciones por torneo</div>
+      <div class="torneo-selector" id="standings-torneo-selector"></div>
+      <div id="standings-hist-area"></div>
+    </div>
+    <div class="card">
       <div class="card-title" style="margin-bottom:0.5rem">Acumulado histórico</div>
       <div id="standings-total-area"><div class="loading-state">Cargando...</div></div>
     </div>
@@ -228,6 +233,7 @@ let torneoActual = 1; // se lee del sheet
 let matches = [];
 let selected = [];
 let selectedHistTorneo = null;
+let selectedStandingsTorneo = null;
 
 function torneoNombre(num) {
   return nombresTorneos[String(num)] || ('Torneo ' + num);
@@ -258,47 +264,57 @@ async function loadMatches() {
   setSyncState('loading', 'Cargando...');
   showError('');
   try {
-    // Una sola llamada GET — igual que la versión que funcionaba
     const res = await fetch(SCRIPT_URL, { redirect: 'follow' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
 
-    matches = data.map(r => ({
-      ts: Number(r.ts),
-      a: teams.findIndex(t => t.name === r.equipo_a),
-      b: teams.findIndex(t => t.name === r.equipo_b),
-      sa: Number(r.score_a),
-      sb: Number(r.score_b),
-      torneo: Number(r.torneo) || 1,
-    })).filter(r => r.a >= 0 && r.b >= 0);
+    // Normalizar torneo: si es string no numérico (ej "Fanta"), asignarlo a 1
+    const torneoNameToNum = {};
+    data.forEach(r => {
+      const t = r.torneo;
+      if (t && isNaN(Number(t)) && !torneoNameToNum[t]) torneoNameToNum[t] = 1;
+    });
 
-    // Torneo activo = el más alto que existe en los datos, o 1
-    const torneos = matches.map(m => m.torneo);
-    const maxEnSheet = torneos.length ? Math.max(...torneos) : 1;
-    // Leemos config y nombres
-    try {
-      const cfg = await fetch(SCRIPT_URL + '?action=get_config', { redirect: 'follow' });
-      const cfgData = await cfg.json();
-      torneoActual = cfgData.torneo_activo || maxEnSheet;
-    } catch(e) {
-      torneoActual = maxEnSheet;
-    }
-    try {
-      const nr = await fetch(SCRIPT_URL + '?action=get_nombres_torneos', { redirect: 'follow' });
-      const nrData = await nr.json();
-      nombresTorneos = nrData.nombres || {};
-    } catch(e) {
-      nombresTorneos = {};
-    }
+    matches = data.map(r => {
+      const t = r.torneo;
+      const torneoNum = (!t || t==='') ? 1 : (!isNaN(Number(t)) ? Number(t) : (torneoNameToNum[t]||1));
+      return {
+        ts: Number(r.ts),
+        a: teams.findIndex(tm => tm.name === r.equipo_a),
+        b: teams.findIndex(tm => tm.name === r.equipo_b),
+        sa: Number(r.score_a),
+        sb: Number(r.score_b),
+        torneo: torneoNum,
+      };
+    }).filter(r => r.a >= 0 && r.b >= 0);
 
+    torneoActual = matches.length ? Math.max(...matches.map(m=>m.torneo)) : 1;
+    nombresTorneos = {};
     if (selectedHistTorneo === null) selectedHistTorneo = torneoActual;
     setSyncState('ok', 'Sincronizado');
     showError('');
+    renderAll();
+
+    // Fetch config y nombres en segundo plano — actualiza sin bloquear
+    Promise.all([
+      fetch(SCRIPT_URL + '?action=get_config', { redirect: 'follow' }).then(r=>r.json()).catch(()=>null),
+      fetch(SCRIPT_URL + '?action=get_nombres_torneos', { redirect: 'follow' }).then(r=>r.json()).catch(()=>null),
+    ]).then(([cfgData, nrData]) => {
+      let changed = false;
+      if (cfgData && cfgData.torneo_activo && cfgData.torneo_activo !== torneoActual) {
+        torneoActual = cfgData.torneo_activo;
+        if (selectedHistTorneo === null) selectedHistTorneo = torneoActual;
+        changed = true;
+      }
+      if (nrData && nrData.nombres) { nombresTorneos = nrData.nombres; changed = true; }
+      if (changed) renderAll();
+    });
+
   } catch(e) {
     setSyncState('err', 'Sin conexión');
     showError('No se pudo conectar. Verificá que el Apps Script esté publicado como "Cualquier persona".');
+    renderAll();
   }
-  renderAll();
 }
 
 async function sendGet(params) {
@@ -307,6 +323,17 @@ async function sendGet(params) {
 }
 
 // ── NUEVO TORNEO ──
+async function renameTorneoNum(num) {
+  const actual = torneoNombre(num);
+  const nombre = prompt('Nombre para ' + actual + ':', actual);
+  if (!nombre || !nombre.trim()) return;
+  setSyncState('loading', 'Guardando...');
+  await sendGet({ action: 'set_nombre_torneo', torneo: num, nombre: nombre.trim() });
+  await delay(1500);
+  await loadMatches();
+}
+
+
 async function renameTorneo() {
   const actual = torneoNombre(torneoActual);
   const nombre = prompt('Nombre para el torneo actual:', actual);
@@ -450,6 +477,7 @@ function renderAll() {
   renderTeamsGrid();
   renderPalmares();
   renderStandings();
+  renderStandingsHist();
   renderStandingsTotal();
   renderHistory();
   renderH2H();
@@ -516,6 +544,56 @@ function renderStandings() {
     '</tr></thead><tbody>'+rows+'</tbody></table>';
 }
 
+function selectStandingsTorneo(t) { selectedStandingsTorneo = t; renderStandingsHist(); }
+
+function renderStandingsHist() {
+  const selectorEl = document.getElementById('standings-torneo-selector');
+  const area = document.getElementById('standings-hist-area');
+
+  // Solo torneos cerrados
+  const cerrados = [...new Set(matches.map(m => m.torneo))].filter(t => t < torneoActual).sort((a,b)=>a-b);
+
+  if (!cerrados.length) {
+    selectorEl.innerHTML = '';
+    area.innerHTML = '<p class="empty">Todavía no hay torneos finalizados</p>';
+    return;
+  }
+
+  if (!selectedStandingsTorneo || !cerrados.includes(selectedStandingsTorneo)) {
+    selectedStandingsTorneo = cerrados[cerrados.length - 1];
+  }
+
+  selectorEl.innerHTML = cerrados.map(t =>
+    '<button class="torneo-chip'+(t===selectedStandingsTorneo?' active':'')+'" onclick="selectStandingsTorneo('+t+')">'+torneoNombre(t)+'</button>'
+  ).join('');
+
+  const filtered = matches.filter(m => m.torneo === selectedStandingsTorneo);
+  if (!filtered.length) { area.innerHTML = '<p class="empty">Sin partidos en este torneo</p>'; return; }
+
+  const stats = teams.map((_,i) => ({idx:i,pj:0,g:0,p:0,pf:0,pc:0}));
+  filtered.forEach(m => {
+    if (m.a>=stats.length||m.b>=stats.length) return;
+    const a=stats[m.a],b=stats[m.b];
+    a.pj++;b.pj++;a.pf+=m.sa;a.pc+=m.sb;b.pf+=m.sb;b.pc+=m.sa;
+    if(m.sa>m.sb){a.g++;b.p++;}else{b.g++;a.p++;}
+  });
+  stats.sort((x,y)=>y.g!==x.g?y.g-x.g:(y.pf-y.pc)-(x.pf-x.pc));
+
+  const rows = stats.map((s,rank) => {
+    const dp=s.pf-s.pc, dpStr=s.pj===0?'–':(dp>0?'+'+dp:String(dp)), dpClass=dp>0?'dp-pos':dp<0?'dp-neg':'';
+    const p=teamPalette(s.idx);
+    const medal = rank===0&&s.g>0?'🏆 ':'';
+    return '<tr><td class="left"><span class="rank">'+(rank+1)+'.</span><span class="dot" style="background:'+p.dot+'"></span>'+medal+teams[s.idx].short+'</td>' +
+      '<td>'+s.pj+'</td><td>'+s.g+'</td><td>'+s.p+'</td><td>'+s.pf+'</td><td>'+s.pc+'</td><td class="'+dpClass+'">'+dpStr+'</td></tr>';
+  }).join('');
+
+  area.innerHTML = '<table class="standings-table"><thead><tr>' +
+    '<th class="left" style="width:36%">Pareja</th><th style="width:10%">PJ</th><th style="width:10%">G</th>' +
+    '<th style="width:10%">P</th><th style="width:10%">PF</th><th style="width:10%">PC</th><th style="width:14%">DP</th>' +
+    '</tr></thead><tbody>'+rows+'</tbody></table>';
+}
+
+
 // ── POSICIONES ACUMULADAS ──
 function renderStandingsTotal() {
   const stats = teams.map((_,i) => ({idx:i,pj:0,g:0,p:0,pf:0,pc:0}));
@@ -546,7 +624,14 @@ function renderHistory() {
   const allT = [...new Set([...torneos, torneoActual])].sort((a,b)=>a-b);
   if (!allT.includes(selectedHistTorneo)) selectedHistTorneo = torneoActual;
   document.getElementById('torneo-selector').innerHTML =
-    allT.map(t => '<button class="torneo-chip'+(t===selectedHistTorneo?' active':'')+'" onclick="selectHistTorneo('+t+')">T'+t+'</button>').join('') +
+    allT.map(t => {
+      const nombre = torneoNombre(t);
+      const isActive = t === selectedHistTorneo;
+      return '<span style="display:inline-flex;align-items:center;gap:2px;">' +
+        '<button class="torneo-chip'+(isActive?' active':'')+'" onclick="selectHistTorneo('+t+')">'+nombre+'</button>' +
+        '<button onclick="renameTorneoNum('+t+')" title="Renombrar" style="background:none;border:none;cursor:pointer;font-size:11px;padding:2px 4px;color:var(--text-tertiary);border-radius:4px;" onmouseover="this.style.color=\'var(--text)\'" onmouseout="this.style.color=\'var(--text-tertiary)\'">✏️</button>' +
+      '</span>';
+    }).join('') +
     '<button class="torneo-chip'+('all'===selectedHistTorneo?' active':'')+'" onclick="selectHistTorneo(\'all\')">Todos</button>';
 
   const filtered = selectedHistTorneo==='all' ? matches : matches.filter(m=>m.torneo===selectedHistTorneo);
